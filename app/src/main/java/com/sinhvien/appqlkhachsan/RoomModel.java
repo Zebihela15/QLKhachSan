@@ -1,13 +1,14 @@
 package com.sinhvien.appqlkhachsan;
 
-
 public class RoomModel {
     private String name;
-    private int imageResId;
+    private int imageResource;
+    private double price;
 
-    public RoomModel(String name, int imageResId) {
+    public RoomModel(String name, int imageResource, double price) {
         this.name = name;
-        this.imageResId = imageResId;
+        this.imageResource = imageResource;
+        this.price = price;
     }
 
     public String getName() {
@@ -15,7 +16,10 @@ public class RoomModel {
     }
 
     public int getImageResId() {
-        return imageResId;
+        return imageResource;
+    }
+
+    public double getPrice() {
+        return price;
     }
 }
-

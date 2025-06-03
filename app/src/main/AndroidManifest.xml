@@ -24,6 +24,9 @@
         </activity>
         <activity android:name=".RegisterActivity" />
         <activity android:name=".HomePageActivity" />
+        <activity android:name=".RoomActivity" />
+        <activity android:name=".BookingActivity"/>
+
 
     </application>
 
