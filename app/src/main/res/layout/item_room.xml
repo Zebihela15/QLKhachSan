@@ -1,28 +1,202 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+    <!-- Room Image Container -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    android:layout_margin="8dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/imgRoom"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/standard_room" />
+
+        <!-- Status Badge -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#4CAF50">
+
+            <TextView
+                android:id="@+id/txtRoomStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✓ Trống"
+                android:textSize="11sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp" />
+        </androidx.cardview.widget.CardView>
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>
+
+    <!-- Room Information -->
+<LinearLayout
+android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:orientation="vertical"
+android:paddingHorizontal="16dp"
+android:paddingBottom="16dp">
+
+<TextView
+    android:id="@+id/txtRoomName"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="🏨 Phòng A101"
+    android:textStyle="bold"
+    android:textSize="18sp"
+    android:textColor="#1A237E"
+    android:fontFamily="sans-serif-medium"
+    android:maxLines="2"
+android:ellipsize="end" />
+
+<TextView
+    android:id="@+id/txtRoomType"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="🛏️ Loại: Deluxe"
+    android:textSize="14sp"
+    android:textColor="#546E7A"
+    android:layout_marginTop="4dp"
+    android:maxLines="1"
+    android:ellipsize="end" />
+
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="10dp"
-    android:background="#FFFFFF"
-    android:elevation="2dp"
-    android:layout_marginBottom="8dp">
-
-    <ImageView
-        android:id="@+id/imageRoom"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/standard_room" />
+    android:gravity="center_vertical"
+    android:layout_marginTop="4dp">
 
     <TextView
-        android:id="@+id/textRoom"
+        android:id="@+id/txtRoomPrice"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:gravity="center_vertical"
-        android:paddingStart="16dp"
-        android:text="Phòng VIP - 2.000.000đ"
-        android:textSize="16sp"
-        android:textColor="#000000" />
+        android:text="💰 500k/đêm"
+        android:textSize="14sp"
+        android:textColor="#E65100"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="12dp"
+        android:background="#E0E0E0"
+        android:layout_marginHorizontal="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⭐ 4.5"
+        android:textSize="12sp"
+        android:textColor="#FF9800"
+        android:maxLines="1"
+        android:ellipsize="end" />
 </LinearLayout>
+
+<!-- Action Buttons -->
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginTop="12dp"
+    android:gravity="center">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginEnd="4dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="#E3F2FD">
+
+        <Button
+            android:id="@+id/btnViewAvailability"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+        android:text="📅 Lịch"
+        android:textSize="12sp"
+        android:textColor="#1976D2"
+        android:background="@android:color/transparent"
+        android:paddingVertical="8dp"
+        android:singleLine="true"
+        android:maxLines="1" />
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="4dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="#E8F5E8">
+
+        <Button
+            android:id="@+id/btnBookRoom"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+        android:text="📝 Đặt"
+        android:textSize="12sp"
+        android:textColor="#388E3C"
+        android:background="@android:color/transparent"
+        android:paddingVertical="8dp"
+        android:singleLine="true"
+        android:maxLines="1" />
+    </androidx.cardview.widget.CardView>
+</LinearLayout>
+
+<!-- View Info Button -->
+<androidx.cardview.widget.CardView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="#FFF3E0">
+
+    <Button
+        android:id="@+id/btnViewInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ℹ️ Xem thông tin chi tiết"
+        android:textSize="13sp"
+        android:textColor="#F57C00"
+        android:background="@android:color/transparent"
+        android:paddingVertical="10dp"
+        android:singleLine="true"
+        android:maxLines="1" />
+</androidx.cardview.widget.CardView>
+</LinearLayout>
+    </LinearLayout>
+    </androidx.cardview.widget.CardView>

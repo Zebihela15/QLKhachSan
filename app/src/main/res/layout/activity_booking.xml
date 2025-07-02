@@ -1,81 +1,278 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:background="#FFFFFF">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- Loại phòng -->
-        <TextView
-            android:text="Loại phòng"
+        <!-- Header -->
+        <LinearLayout
+            android:id="@+id/headerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="12dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_arrow_back"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Đặt Phòng"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:gravity="center" />
+
+            <ImageView
+                android:id="@+id/btnRefresh"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_refresh"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp" />
+
+        </LinearLayout>
+
+        <!-- Hotel Info -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/hotelCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:layout_constraintTop_toBottomOf="@id/headerLayout">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:id="@+id/hotelImage"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:scaleType="centerCrop"
+                    android:background="#E8F4FD"
+                    app:cardCornerRadius="8dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+
+                    <TextView
+                        android:id="@+id/hotelName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1A1A1A" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TP. Hồ Chí Minh"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:layout_marginTop="4dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Booking Details -->
+        <LinearLayout
+            android:id="@+id/bookingSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/hotelCard">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Thông Tin Đặt Phòng"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="Ngày"
+                    android:textSize="14sp"
+                    android:textColor="#666666" />
+
+                <TextView
+                    android:id="@+id/dateRange"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text=""
+                    android:textSize="14sp"
+                    android:textColor="#1A1A1A" />
+
+                <Button
+                    android:id="@+id/btnSelectDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chọn"
+                    android:textSize="14sp"
+                    android:textColor="#4285F4"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/editCustomerName"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Họ và Tên"
+                android:textSize="14sp"
+                android:inputType="textPersonName"
+                android:background="@drawable/modern_input_background"
+                android:paddingHorizontal="12dp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/editCustomerPhone"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Số Điện Thoại"
+                android:textSize="14sp"
+                android:inputType="phone"
+                android:background="@drawable/modern_input_background"
+                android:paddingHorizontal="12dp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/editCustomerCCCD"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="CCCD/Hộ Chiếu"
+                android:textSize="14sp"
+                android:inputType="number"
+                android:background="@drawable/modern_input_background"
+                android:paddingHorizontal="12dp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/editCustomerEmail"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Email (Tùy chọn)"
+                android:textSize="14sp"
+                android:inputType="textEmailAddress"
+                android:background="@drawable/modern_input_background"
+                android:paddingHorizontal="12dp"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/editVoucherCode"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Mã Giảm Giá (Tùy chọn)"
+                android:textSize="14sp"
+                android:inputType="text"
+                android:background="@drawable/voucher_input_background"
+                android:paddingHorizontal="12dp" />
+
+        </LinearLayout>
+
+        <!-- Price Summary -->
+        <LinearLayout
+            android:id="@+id/priceSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/bookingSection">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tổng Giá"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/textTotalPrice"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text=""
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A1A" />
+
+                <TextView
+                    android:id="@+id/textTotalDays"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="14sp"
+                    android:textColor="#666666" />
+
+            </LinearLayout>
+
+            <!-- Thêm dòng hiển thị chi tiết -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Giá đã bao gồm thuế và phí"
+                android:textSize="12sp"
+                android:textColor="#666666" />
+
+        </LinearLayout>
+
+        <!-- Continue Button -->
+        <Button
+            android:id="@+id/btnContinue"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="Đặt Phòng"
             android:textSize="16sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:textColor="#FFFFFF"
+            android:background="@drawable/modern_button_background"
+            app:layout_constraintTop_toBottomOf="@id/priceSummary" />
 
-        <Spinner
-            android:id="@+id/room_type_spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <!-- Ngày nhận phòng -->
-        <TextView
-            android:text="Ngày nhận phòng"
-            android:layout_marginTop="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <DatePicker
-            android:id="@+id/checkin_datepicker"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-        <!-- Ngày trả phòng -->
-        <TextView
-            android:text="Ngày trả phòng"
-            android:layout_marginTop="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <DatePicker
-            android:id="@+id/checkout_datepicker"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
-
-        <!-- Số lượng khách -->
-        <TextView
-            android:text="Số lượng khách"
-            android:layout_marginTop="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <EditText
-            android:id="@+id/guest_count"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:hint="Nhập số lượng khách" />
-
-        <!-- Nút Đặt phòng -->
-        <Button
-            android:id="@+id/book_button"
-            android:text="Đặt phòng"
-            android:layout_marginTop="24dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <Button
-            android:id="@+id/btn_back"
-            android:text="Quay về"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
-
-
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

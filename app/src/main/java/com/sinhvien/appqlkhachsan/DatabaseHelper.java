@@ -17,34 +17,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         try {
-            // Create Users table
-            db.execSQL("CREATE TABLE Users (" +
-                    "MaKH INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "HoTen TEXT, " +
-                    "SDT TEXT, " +
-                    "Email TEXT, " +
-                    "Username TEXT UNIQUE, " +
-                    "Password TEXT, " +
-                    "Role TEXT);");
+            Log.d("DB_DEBUG", "Creating hotel database...");
 
-            // Insert default Admin account
-            db.execSQL("INSERT INTO Users (HoTen, SDT, Email, Username, Password, Role) VALUES " +
-                    "('Admin', '0123456789', 'admin@example.com', 'admin', '123123', 'admin');");
-
-            // Create Voucher table
+            // Bảng Voucher
             db.execSQL("CREATE TABLE Voucher (" +
                     "MaGiam TEXT PRIMARY KEY, " +
                     "LoaiMa TEXT, " +
                     "MoTa TEXT, " +
                     "ChietKhau REAL);");
+            db.execSQL("INSERT INTO Voucher VALUES ('MG0001', 'Khuyen mai le', 'Giam gia mua le hoi', 10);");
+            db.execSQL("INSERT INTO Voucher VALUES ('MG0002', 'Khach quen', 'Uu dai cho khach hang than thiet', 15);");
+            db.execSQL("INSERT INTO Voucher VALUES ('MG0003', 'Khuyen mai moi', 'Giam gia cho khach moi', 20);");
 
-            // Insert sample Vouchers
-            db.execSQL("INSERT INTO Voucher (MaGiam, LoaiMa, MoTa, ChietKhau) VALUES " +
-                    "('MG0001', 'Khuyen mai le', 'Giam gia mua le hoi', 10);");
-            db.execSQL("INSERT INTO Voucher (MaGiam, LoaiMa, MoTa, ChietKhau) VALUES " +
-                    "('MG0002', 'Khach quen', 'Uu dai cho khach hang than thiet', 15);");
-
-            // Create NhaHang table
+            // Bảng NhaHang
             db.execSQL("CREATE TABLE NhaHang (" +
                     "MaNhaHang INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "Ten TEXT, " +
@@ -52,42 +37,86 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     "MoTa TEXT, " +
                     "GioMoCua TEXT, " +
                     "GioDongCua TEXT, " +
-                    "SDT TEXT);");
+                    "SDT TEXT, " +
+                    "HinhAnh INTEGER);");
+            db.execSQL("INSERT INTO NhaHang (Ten, DiaChi, MoTa, GioMoCua, GioDongCua, SDT, HinhAnh) VALUES " +
+                    "('Nhà hàng Buffet quốc tế', '123 Lê Lợi, Q1', 'Buffet đa dạng món ăn', '07:00', '22:00', '0901234567', " + R.drawable.restaurant1 + ");");
+            db.execSQL("INSERT INTO NhaHang (Ten, DiaChi, MoTa, GioMoCua, GioDongCua, SDT, HinhAnh) VALUES " +
+                    "('Nhà hàng Á Đông', '123 Lê Lợi, Q1', 'Ẩm thực châu Á', '08:00', '23:00', '0907654321', " + R.drawable.restaurant2 + ");");
+            db.execSQL("INSERT INTO NhaHang (Ten, DiaChi, MoTa, GioMoCua, GioDongCua, SDT, HinhAnh) VALUES " +
+                    "('Nhà hàng Hải sản', '456 Nguyễn Huệ, Q1', 'Hải sản tươi sống', '10:00', '22:00', '0909876543', " + R.drawable.restaurant3 + ");");
 
-            // Create LoaiPhong table
+            // Bảng LoaiPhong
             db.execSQL("CREATE TABLE LoaiPhong (" +
                     "MaLoaiPhong INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "LoaiPhong TEXT, " +
                     "GiaPhong REAL);");
+            db.execSQL("INSERT INTO LoaiPhong (LoaiPhong, GiaPhong) VALUES ('Tiêu chuẩn', 500000);");
+            db.execSQL("INSERT INTO LoaiPhong (LoaiPhong, GiaPhong) VALUES ('VIP', 1000000);");
+            db.execSQL("INSERT INTO LoaiPhong (LoaiPhong, GiaPhong) VALUES ('Deluxe', 800000);");
 
-            // Insert sample LoaiPhong data
-            db.execSQL("INSERT INTO LoaiPhong (LoaiPhong, GiaPhong) VALUES " +
-                    "('Tieu chuan', 500000);");
-            db.execSQL("INSERT INTO LoaiPhong (LoaiPhong, GiaPhong) VALUES " +
-                    "('VIP', 1000000);");
-            db.execSQL("INSERT INTO LoaiPhong (LoaiPhong, GiaPhong) VALUES " +
-                    "('5 sao', 2000000);");
+            // Bảng TienIch
+            db.execSQL("CREATE TABLE TienIch (" +
+                    "MaTienIch INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "TenTienIch TEXT, " +
+                    "Icon INTEGER);");
+            db.execSQL("INSERT INTO TienIch (TenTienIch, Icon) VALUES ('Wifi', " + R.drawable.ic_wifi + ");");
+            db.execSQL("INSERT INTO TienIch (TenTienIch, Icon) VALUES ('Điều hòa', " + R.drawable.ic_air_conditioner + ");");
+            db.execSQL("INSERT INTO TienIch (TenTienIch, Icon) VALUES ('TV', " + R.drawable.ic_tv + ");");
+            db.execSQL("INSERT INTO TienIch (TenTienIch, Icon) VALUES ('Tủ lạnh', " + R.drawable.ic_fridge + ");");
+            db.execSQL("INSERT INTO TienIch (TenTienIch, Icon) VALUES ('Ban công', " + R.drawable.ic_balcony + ");");
 
-            // Create Phong table
+            // Bảng Phong
             db.execSQL("CREATE TABLE Phong (" +
                     "MaPhong INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "TenPhong TEXT, " +
                     "SLGiuong INTEGER, " +
                     "DienTich REAL, " +
-                    "TienIch TEXT, " +
                     "TrangThai TEXT, " +
                     "DonViTinh TEXT, " +
                     "MaLoaiPhong INTEGER, " +
+                    "MoTa TEXT, " +
+                    "DiaChi TEXT, " +
+                    "GhiChu TEXT, " +
+                    "HinhAnh INTEGER, " +
                     "FOREIGN KEY(MaLoaiPhong) REFERENCES LoaiPhong(MaLoaiPhong));");
+            db.execSQL("INSERT INTO Phong (TenPhong, SLGiuong, DienTich, TrangThai, DonViTinh, MaLoaiPhong, MoTa, DiaChi, GhiChu, HinhAnh) VALUES " +
+                    "('Phòng Standard', 2, 25.0, 'Còn trống', 'm2', 1, 'Phòng Standard hiện đại', '123 Lê Lợi, Q1', 'View vườn', " + R.drawable.standard_room + ");");
+            db.execSQL("INSERT INTO Phong (TenPhong, SLGiuong, DienTich, TrangThai, DonViTinh, MaLoaiPhong, MoTa, DiaChi, GhiChu, HinhAnh) VALUES " +
+                    "('Phòng VIP', 2, 35.0, 'Còn trống', 'm2', 2, 'Phòng VIP sang trọng', '123 Lê Lợi, Q1', 'View thành phố', " + R.drawable.vip_rooms + ");");
+            db.execSQL("INSERT INTO Phong (TenPhong, SLGiuong, DienTich, TrangThai, DonViTinh, MaLoaiPhong, MoTa, DiaChi, GhiChu, HinhAnh) VALUES " +
+                    "('Phòng Deluxe', 3, 30.0, 'Còn trống', 'm2', 3, 'Phòng Deluxe tiện nghi', '123 Lê Lợi, Q1', 'View biển', " + R.drawable.deluxe_room + ");");
 
-            // Insert sample Phong data
-            db.execSQL("INSERT INTO Phong (TenPhong, SLGiuong, DienTich, TienIch, TrangThai, DonViTinh, MaLoaiPhong) VALUES " +
-                    "('Phong 101', 2, 25.0, 'May lanh, TV, Wifi', 'Trong', 'm2', 1);");
+            // Bảng Phong_TienIch
+            db.execSQL("CREATE TABLE Phong_TienIch (" +
+                    "MaPhong INTEGER, " +
+                    "MaTienIch INTEGER, " +
+                    "PRIMARY KEY(MaPhong, MaTienIch), " +
+                    "FOREIGN KEY(MaPhong) REFERENCES Phong(MaPhong), " +
+                    "FOREIGN KEY(MaTienIch) REFERENCES TienIch(MaTienIch));");
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (1, 1);"); // Standard - Wifi
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (1, 2);"); // Standard - Điều hòa
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (2, 1);"); // VIP - Wifi
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (2, 2);"); // VIP - Điều hòa
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (2, 3);"); // VIP - TV
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (3, 1);"); // Deluxe - Wifi
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (3, 2);"); // Deluxe - Điều hòa
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (3, 3);"); // Deluxe - TV
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (3, 4);"); // Deluxe - Tủ lạnh
+            db.execSQL("INSERT INTO Phong_TienIch VALUES (3, 5);"); // Deluxe - Ban công
 
-            // Create DonDatPhong table
+            // Bảng KhachHang
+            db.execSQL("CREATE TABLE KhachHang (" +
+                    "MaKH TEXT PRIMARY KEY, " +
+                    "TenKH TEXT, " +
+                    "SDT TEXT, " +
+                    "Email TEXT, " +
+                    "CCCD TEXT);");
+
+            // Bảng DonDatPhong
             db.execSQL("CREATE TABLE DonDatPhong (" +
                     "MaDon INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "MaKH INTEGER, " +
+                    "MaKH TEXT, " +
                     "MaPhong INTEGER, " +
                     "MaGiam TEXT, " +
                     "TGDat TEXT, " +
@@ -95,11 +124,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     "TGCheckout TEXT, " +
                     "TrangThaiTT TEXT, " +
                     "TrangThaiDD TEXT, " +
-                    "FOREIGN KEY(MaKH) REFERENCES Users(MaKH), " +
+                    "FOREIGN KEY(MaKH) REFERENCES KhachHang(MaKH), " +
                     "FOREIGN KEY(MaPhong) REFERENCES Phong(MaPhong), " +
                     "FOREIGN KEY(MaGiam) REFERENCES Voucher(MaGiam));");
 
-            // Create DichVuKhachSan table
+            // Bảng HoaDon
+            db.execSQL("CREATE TABLE HoaDon (" +
+                    "MaHoaDon TEXT PRIMARY KEY, " +
+                    "MaDon INTEGER, " +
+                    "MaPhong INTEGER, " +
+                    "TenKhach TEXT, " +
+                    "SoDienThoai TEXT, " +
+                    "CCCD TEXT, " +
+                    "Email TEXT, " +
+                    "TGCheckin TEXT, " +
+                    "TGCheckout TEXT, " +
+                    "TongGia REAL, " +
+                    "TrangThai TEXT, " +
+                    "MaGiamGia TEXT, " +
+                    "FOREIGN KEY(MaDon) REFERENCES DonDatPhong(MaDon), " +
+                    "FOREIGN KEY(MaPhong) REFERENCES Phong(MaPhong), " +
+                    "FOREIGN KEY(MaGiamGia) REFERENCES Voucher(MaGiam));");
+
+            // Bảng DichVuKhachSan
             db.execSQL("CREATE TABLE DichVuKhachSan (" +
                     "MaDV INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "LoaiDV TEXT, " +
@@ -111,38 +158,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     "Ten TEXT, " +
                     "GiaTB REAL);");
 
-            // Create ThucPhamPhong table
-            db.execSQL("CREATE TABLE ThucPhamPhong (" +
-                    "MaTP INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "Ten TEXT, " +
-                    "Gia REAL, " +
-                    "SoLuong INTEGER);");
-
-            // Create HoaDon table
-            db.execSQL("CREATE TABLE HoaDon (" +
-                    "MaPhieu INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "MaKH INTEGER, " +
-                    "TGCapHD TEXT, " +
-                    "FOREIGN KEY(MaKH) REFERENCES Users(MaKH));");
-
-            // Create QuanLyTraPhong table
-            db.execSQL("CREATE TABLE QuanLyTraPhong (" +
-                    "MaTra INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "MaKH INTEGER, " +
-                    "MaNV TEXT, " +
-                    "TGCheckIn TEXT, " +
-                    "TGCheckOut TEXT, " +
-                    "GhiChu TEXT, " +
-                    "FOREIGN KEY(MaKH) REFERENCES Users(MaKH));");
-
-            // Create DoThatLac table
-            db.execSQL("CREATE TABLE DoThatLac (" +
-                    "Ma INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "NoiDung TEXT, " +
-                    "TG TEXT, " +
-                    "TrangThai TEXT, " +
-                    "MaNV TEXT);");
-
+            Log.d("DB_DEBUG", "Database created successfully");
         } catch (Exception e) {
             Log.e("DB_ERROR", "Error creating database: " + e.getMessage(), e);
         }
@@ -150,27 +166,36 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Drop all tables if they exist
-        db.execSQL("DROP TABLE IF EXISTS DoThatLac");
-        db.execSQL("DROP TABLE IF EXISTS QuanLyTraPhong");
-        db.execSQL("DROP TABLE IF EXISTS HoaDon");
-        db.execSQL("DROP TABLE IF EXISTS ThucPhamPhong");
-        db.execSQL("DROP TABLE IF EXISTS DichVuKhachSan");
-        db.execSQL("DROP TABLE IF EXISTS DonDatPhong");
-        db.execSQL("DROP TABLE IF EXISTS Phong");
-        db.execSQL("DROP TABLE IF EXISTS LoaiPhong");
-        db.execSQL("DROP TABLE IF EXISTS NhaHang");
-        db.execSQL("DROP TABLE IF EXISTS Voucher");
-        db.execSQL("DROP TABLE IF EXISTS Users");
+        try {
+            db.execSQL("DROP TABLE IF EXISTS Voucher");
+            db.execSQL("DROP TABLE IF EXISTS NhaHang");
+            db.execSQL("DROP TABLE IF EXISTS LoaiPhong");
+            db.execSQL("DROP TABLE IF EXISTS TienIch");
+            db.execSQL("DROP TABLE IF EXISTS Phong");
+            db.execSQL("DROP TABLE IF EXISTS Phong_TienIch");
+            db.execSQL("DROP TABLE IF EXISTS KhachHang");
+            db.execSQL("DROP TABLE IF EXISTS DonDatPhong");
+            db.execSQL("DROP TABLE IF EXISTS HoaDon");
+            db.execSQL("DROP TABLE IF EXISTS DichVuKhachSan");
+            onCreate(db);
+        } catch (Exception e) {
+            Log.e("DB_ERROR", "Error upgrading database: " + e.getMessage(), e);
+        }
+    }
 
-        // Recreate the database
-        onCreate(db);
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        try {
+            Log.w("DB_WARNING", "Downgrading database from version " + oldVersion + " to " + newVersion + ", which will destroy all old data");
+            onUpgrade(db, oldVersion, newVersion);
+        } catch (Exception e) {
+            Log.e("DB_ERROR", "Error downgrading database: " + e.getMessage(), e);
+        }
     }
 
     @Override
     public void onOpen(SQLiteDatabase db) {
         super.onOpen(db);
-        // Enable foreign key constraints
         if (!db.isReadOnly()) {
             db.execSQL("PRAGMA foreign_keys=ON;");
         }

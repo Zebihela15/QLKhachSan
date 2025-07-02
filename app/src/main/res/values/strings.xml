@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">AppQLKhachSan</string>
+
+    <string name="room_image">Room Image</string>
+    <string name="room_name_placeholder">Room Name</string>
+    <string name="room_price_placeholder">Price</string>
+    <string name="restaurant_image">Restaurant Image</string>
+    <string name="restaurant_name_placeholder">Restaurant Name</string>
+    <string name="app_name">Quản lý Khách sạn</string>
+    <string name="room_type_prompt">Loại phòng</string>
+    <string name="status_prompt">Trạng thái</string>
 </resources>

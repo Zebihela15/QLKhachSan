@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="sort_options">
+        <item>Giá: Thấp đến cao</item>
+        <item>Giá: Cao đến thấp</item>
+        <item>Đánh giá</item>
+    </string-array>
+    <string-array name="room_types">
+        <item>Tiêu chuẩn</item>
+        <item>VIP</item>
+        <item>Deluxe</item>
+    </string-array>
+    <string-array name="room_status_array">
+        <item>Tất cả</item>
+        <item>Trống</item>
+        <item>Đang chờ</item>
+        <item>Hết phòng</item>
+    </string-array>
+    <string-array name="room_images">
+        <item>standard_room</item>
+        <item>vip_room</item>
+        <item>deluxe_room</item>
+    </string-array>
+    <string-array name="utility_icons">
+        <item>ic_wifi</item>
+        <item>ic_air_conditioner</item>
+        <item>ic_tv</item>
+        <item>ic_fridge</item>
+        <item>ic_balcony</item>
+    </string-array>
+</resources>
