@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+
 import com.sinhvien.appqlkhachsan.admin.AdminDashboardActivity;
 
 import java.util.HashMap;
@@ -27,14 +28,13 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private boolean isActive = true;
-    private boolean isLoginInProgress = false; // Ngăn nhấn nút nhiều lần
+    private boolean isLoginInProgress = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Bật logging Firestore để debug
         FirebaseFirestore.setLoggingEnabled(true);
 
         mAuth = FirebaseAuth.getInstance();
@@ -48,7 +48,7 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(v -> {
             if (!isActive || isLoginInProgress) return;
             isLoginInProgress = true;
-            btnLogin.setEnabled(false); // Vô hiệu hóa nút
+            btnLogin.setEnabled(false);
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
@@ -71,20 +71,24 @@ public class LoginActivity extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null) {
                                 Log.d(TAG, "Đăng nhập thành công, UID: " + user.getUid());
-                                createUserDocument(user.getUid(), email, email.equals("admin@gmail.com") && password.equals("123456"), () -> {
-                                    if (isActive) {
-                                        if (email.equals("admin@gmail.com") && password.equals("123456")) {
+                                // Chỉ tạo/cập nhật document cho admin
+                                if (email.equals("admin@gmail.com") && password.equals("123456")) {
+                                    createAdminDocument(user.getUid(), email, () -> {
+                                        if (isActive) {
                                             Log.d(TAG, "Chuyển đến AdminDashboardActivity");
                                             startActivity(new Intent(LoginActivity.this, AdminDashboardActivity.class));
-                                        } else {
-                                            Log.d(TAG, "Chuyển đến MainActivity");
-                                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                            finish();
                                         }
-                                        finish();
-                                    }
+                                        isLoginInProgress = false;
+                                        btnLogin.setEnabled(true);
+                                    });
+                                } else {
+                                    Log.d(TAG, "Chuyển đến MainActivity");
+                                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                    finish();
                                     isLoginInProgress = false;
                                     btnLogin.setEnabled(true);
-                                });
+                                }
                             } else {
                                 Toast.makeText(this, "Không lấy được thông tin người dùng!", Toast.LENGTH_SHORT).show();
                                 isLoginInProgress = false;
@@ -116,58 +120,56 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void createUserDocument(String uid, String email, boolean isAdmin, Runnable onSuccess) {
-        Log.d(TAG, "Kiểm tra tài liệu người dùng: users/" + uid);
+    private void createAdminDocument(String uid, String email, Runnable onSuccess) {
+        Log.d(TAG, "Kiểm tra tài liệu admin: users/" + uid);
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (!isActive) return;
                     if (!documentSnapshot.exists()) {
-                        Log.d(TAG, "Tài liệu người dùng không tồn tại, tạo mới");
+                        Log.d(TAG, "Tài liệu admin không tồn tại, tạo mới");
                         Map<String, Object> userData = new HashMap<>();
                         userData.put("email", email);
-                        userData.put("role", isAdmin ? "admin" : "user");
+                        userData.put("role", "admin");
                         userData.put("fullName", email.split("@")[0]);
 
                         db.collection("users").document(uid).set(userData)
                                 .addOnSuccessListener(aVoid -> {
-                                    Log.d(TAG, "Tạo tài liệu người dùng thành công: users/" + uid);
+                                    Log.d(TAG, "Tạo tài liệu admin thành công: users/" + uid);
                                     onSuccess.run();
                                 })
                                 .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Lỗi tạo tài liệu người dùng: " + e.getMessage());
+                                    Log.e(TAG, "Lỗi tạo tài liệu admin: " + e.getMessage());
                                     if (isActive) {
-                                        Toast.makeText(this, "Lỗi tạo tài liệu người dùng: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                        Toast.makeText(this, "Lỗi tạo tài liệu admin: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    }
+                                    isLoginInProgress = false;
+                                    btnLogin.setEnabled(true);
+                                });
+                    } else if (!"admin".equals(documentSnapshot.getString("role"))) {
+                        Log.d(TAG, "Cập nhật role admin cho users/" + uid);
+                        db.collection("users").document(uid)
+                                .update("role", "admin")
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "Cập nhật role admin thành công");
+                                    onSuccess.run();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Lỗi cập nhật role admin: " + e.getMessage());
+                                    if (isActive) {
+                                        Toast.makeText(this, "Lỗi cập nhật role admin: " + e.getMessage(), Toast.LENGTH_LONG).show();
                                     }
                                     isLoginInProgress = false;
                                     btnLogin.setEnabled(true);
                                 });
                     } else {
-                        Log.d(TAG, "Tài liệu người dùng tồn tại: " + documentSnapshot.getData());
-                        if (isAdmin && !"admin".equals(documentSnapshot.getString("role"))) {
-                            Log.d(TAG, "Cập nhật role admin cho users/" + uid);
-                            db.collection("users").document(uid)
-                                    .update("role", "admin")
-                                    .addOnSuccessListener(aVoid -> {
-                                        Log.d(TAG, "Cập nhật role admin thành công");
-                                        onSuccess.run();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Log.e(TAG, "Lỗi cập nhật role: " + e.getMessage());
-                                        if (isActive) {
-                                            Toast.makeText(this, "Lỗi cập nhật role: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                        }
-                                        isLoginInProgress = false;
-                                        btnLogin.setEnabled(true);
-                                    });
-                        } else {
-                            onSuccess.run();
-                        }
+                        Log.d(TAG, "Tài liệu admin tồn tại: " + documentSnapshot.getData());
+                        onSuccess.run();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Lỗi kiểm tra tài liệu người dùng: " + e.getMessage());
+                    Log.e(TAG, "Lỗi kiểm tra tài liệu admin: " + e.getMessage());
                     if (isActive) {
-                        Toast.makeText(this, "Lỗi kiểm tra tài liệu người dùng: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Lỗi kiểm tra tài liệu admin: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                     isLoginInProgress = false;
                     btnLogin.setEnabled(true);

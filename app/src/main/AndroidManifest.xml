@@ -22,10 +22,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+    <activity android:name=".NotificationsActivity"/>
         <activity android:name=".RegisterActivity" />
         <activity android:name=".migration.DataMigrationActivity" />
-
+        <activity android:name=".CustomerBookingActivity" />
         <activity android:name=".MainActivity"></activity>
         <activity android:name=".RoomActivity" />
         <activity android:name=".RestaurantActivity" />

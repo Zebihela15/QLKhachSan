@@ -45,31 +45,26 @@ public class RegisterActivity extends AppCompatActivity {
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
-            // Kiểm tra các trường không được rỗng
             if (fullName.isEmpty() || phone.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Kiểm tra độ dài mật khẩu
             if (password.length() < 6) {
                 etPassword.setError("Mật khẩu phải có ít nhất 6 ký tự");
                 return;
             }
 
-            // Kiểm tra số điện thoại
             if (!isValidPhone(phone)) {
                 etPhone.setError("Số điện thoại phải là 10 số!");
                 return;
             }
 
-            // Kiểm tra email
             if (!isValidEmail(email)) {
                 etEmail.setError("Email không hợp lệ!");
                 return;
             }
 
-            // Đăng ký với Firebase
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this, task -> {
                         if (task.isSuccessful()) {
@@ -78,7 +73,6 @@ public class RegisterActivity extends AppCompatActivity {
                             userData.put("fullName", fullName);
                             userData.put("phone", phone);
                             userData.put("email", email);
-
                             db.collection("users").document(uid)
                                     .set(userData)
                                     .addOnSuccessListener(aVoid -> {
@@ -100,12 +94,10 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private boolean isValidPhone(String phone) {
-        // Kiểm tra độ dài 10 số và chỉ chứa số
         return phone.length() == 10 && phone.matches("\\d+");
     }
 
     private boolean isValidEmail(String email) {
-        // Kiểm tra định dạng email hợp lệ
         return !email.isEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 }

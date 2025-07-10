@@ -158,6 +158,7 @@ public class DataMigrationActivity extends AppCompatActivity {
             data.put("TGCheckout", cursor.getString(6));
             data.put("TrangThaiTT", cursor.getString(7));
             data.put("TrangThaiDD", cursor.getString(8));
+            data.put("GhiChu", cursor.getString(9));
             firestore.collection("bookings").document(String.valueOf(cursor.getInt(0))).set(data);
         }
         cursor.close();

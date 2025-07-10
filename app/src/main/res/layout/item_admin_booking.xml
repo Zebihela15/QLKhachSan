@@ -1,79 +1,366 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp">
+    android:layout_margin="8dp"
+    android:backgroundTint="#FFFFFF"
+    android:elevation="4dp"
+    app:cardCornerRadius="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvBookingId"
-            android:layout_width="wrap_content"
+        <!-- Header with Status Indicator -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Mã đơn: N/A"
-            android:textSize="16sp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
 
-        <TextView
-            android:id="@+id/tvCustomerName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Khách hàng: N/A"
-            android:textSize="16sp"/>
+            <TextView
+                android:id="@+id/tvStatusIndicator"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@drawable/circle_status"
+                android:layout_marginEnd="12dp" />
 
-        <TextView
-            android:id="@+id/tvRoomName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Phòng: N/A"
-            android:textSize="16sp"/>
+            <TextView
+                android:id="@+id/tvBookingId"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Mã đơn: N/A"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#333333" />
 
-        <TextView
-            android:id="@+id/tvDateRange"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Ngày nhận - trả: N/A"
-            android:textSize="16sp"/>
+            <TextView
+                android:id="@+id/tvStatusDD"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="N/A"
+                android:textSize="12sp"
+                android:textColor="#FFFFFF"
+                android:background="#6200EE"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvStatusDD"
-            android:layout_width="wrap_content"
+        <!-- Customer Info Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Trạng thái: N/A"
-            android:textSize="16sp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="👤"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvCustomerName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Khách hàng: N/A"
+                android:textSize="14sp"
+                android:textColor="#333333" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
 
-            <Button
-                android:id="@+id/btnCheckIn"
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="📱"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvPhoneNumber"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Check-in"
-                android:visibility="gone"/>
+                android:text="Số điện thoại: N/A"
+                android:textSize="14sp"
+                android:textColor="#333333" />
+        </LinearLayout>
 
-            <Button
-                android:id="@+id/btnCheckOut"
+        <!-- Room Info Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="🏨"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvRoomName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Check-out"
-                android:visibility="gone"/>
-            <Button
-                android:id="@+id/btnEditBooking"
+                android:text="Phòng: N/A"
+                android:textSize="14sp"
+                android:textColor="#333333" />
+        </LinearLayout>
+
+        <!-- Date Range Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="📅"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvDateRange"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ngày nhận - trả: N/A"
+                android:textSize="14sp"
+                android:textColor="#333333" />
+        </LinearLayout>
+
+        <!-- Cancel Request Warning -->
+        <LinearLayout
+            android:id="@+id/llCancelRequest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#FFF3E0"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="⚠️"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvCancelRequest"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Yêu cầu hủy: N/A"
+                android:textSize="14sp"
+                android:textColor="#FF6F00"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Notes Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:text="📝"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvGhiChu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ghi chú: N/A"
+                android:textSize="14sp"
+                android:textColor="#757575"
+                android:maxLines="2"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Action Buttons -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chỉnh sửa"
-                android:layout_marginTop="8dp"
-                android:layout_gravity="end"/>
+                android:orientation="horizontal">
 
+                <Button
+                    android:id="@+id/btnConfirm"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Duyệt"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#4CAF50"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
 
-        </LinearLayout>
+                <Button
+                    android:id="@+id/btnReject"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Từ chối"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#F44336"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnCheckIn"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Check-in"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#2196F3"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnCheckOut"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Check-out"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#2196F3"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnEarlyCheckOut"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Trả sớm"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#FF9800"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnAcceptCancel"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Chấp nhận hủy"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#4CAF50"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnRejectCancel"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Từ chối hủy"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#F44336"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnDeleteBooking"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Xóa đơn"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#F44336"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnEditBooking"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Chỉnh sửa"
+                    android:visibility="gone"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="#FFC107"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnDetails"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Chi tiết"
+                    android:backgroundTint="#6200EE"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp" />
+            </LinearLayout>
+        </HorizontalScrollView>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

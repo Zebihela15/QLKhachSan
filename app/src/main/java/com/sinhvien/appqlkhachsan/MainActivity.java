@@ -14,6 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView roomRecyclerView;
     private EditText searchBar;
     private Spinner spinnerSort;
+    private ImageView notificationIcon;
     private RoomAdapter roomAdapter;
     private List<RoomModel> roomList;
     private List<RoomModel> originalRoomList;
@@ -57,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private boolean isActive = true;
     private boolean isRoomsLoaded = false;
-    private boolean isLoadingRooms = false; // Biến mới để khóa tải phòng
+    private boolean isLoadingRooms = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         roomRecyclerView = findViewById(R.id.roomRecyclerView);
         searchBar = findViewById(R.id.searchBar);
         spinnerSort = findViewById(R.id.spinnerSort);
+        notificationIcon = findViewById(R.id.notificationIcon);
 
         String[] sortOptions = {"Sắp xếp: Mặc định", "Sắp xếp: Giá thấp đến cao", "Sắp xếp: Giá cao đến thấp"};
         ArrayAdapter<String> sortAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, sortOptions);
@@ -113,6 +116,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        notificationIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, NotificationsActivity.class);
+            startActivity(intent);
+        });
+
         BottomNavigationView bottomNavigationView = findViewById(R.id.navigation);
         bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
             int itemId = item.getItemId();
@@ -122,11 +130,10 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, UserInfoActivity.class));
                 return true;
             } else if (itemId == R.id.nav_booking) {
-                startActivity(new Intent(MainActivity.this, BookingActivity.class));
+                startActivity(new Intent(MainActivity.this, CustomerBookingActivity.class));
                 return true;
             }
             return false;
-
         });
 
         initializeRoomImages();
@@ -158,8 +165,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeRoomImages() {
         roomTypeImages.put(1, R.drawable.standard_room);
-        roomTypeImages.put(2, R.drawable.vip_rooms);   // Sửa cho Phòng VIP
-        roomTypeImages.put(3, R.drawable.deluxe_room); // Sửa cho Phòng Deluxe
+        roomTypeImages.put(2, R.drawable.vip_rooms);
+        roomTypeImages.put(3, R.drawable.deluxe_room);
     }
 
     private int getRoomImageResource(int maLoaiPhong) {
@@ -180,7 +187,6 @@ public class MainActivity extends AppCompatActivity {
                                 runOnUiThread(() -> roomTypePrices.put(maLoaiPhong, giaPhong));
                             }
                         }
-                        // Cập nhật RoomAdapter sau khi giá phòng được tải
                         runOnUiThread(() -> roomAdapter.notifyDataSetChanged());
                     }
                 }
@@ -326,7 +332,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Bỏ qua loadRoomsFromFirestore: isActive=" + isActive + ", isRoomsLoaded=" + isRoomsLoaded + ", isLoadingRooms=" + isLoadingRooms);
             return;
         }
-        isLoadingRooms = true; // Khóa tải phòng
+        isLoadingRooms = true;
         roomList.clear();
         originalRoomList.clear();
         Set<Integer> addedRoomIds = new HashSet<>();

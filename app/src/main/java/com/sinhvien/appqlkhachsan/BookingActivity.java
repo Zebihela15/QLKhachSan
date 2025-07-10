@@ -249,6 +249,59 @@ public class BookingActivity extends AppCompatActivity {
             return;
         }
 
+        String maKH = currentUser.getUid();
+
+        // Kiểm tra trùng lịch đặt phòng của người dùng
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            Date newCheckIn = dateFormat.parse(checkInDate);
+            Date newCheckOut = dateFormat.parse(checkOutDate);
+
+            firestore.collection("invoices")
+                    .whereEqualTo("MaKH", maKH)
+                    .whereNotEqualTo("TrangThai", "Hủy")
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        boolean hasOverlap = false;
+                        for (DocumentSnapshot document : querySnapshot) {
+                            try {
+                                String bookedStartStr = document.getString("TGCheckin");
+                                String bookedEndStr = document.getString("TGCheckout");
+                                if (bookedStartStr == null || bookedEndStr == null) continue;
+                                Date bookedStart = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(bookedStartStr);
+                                Date bookedEnd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(bookedEndStr);
+                                if (!(newCheckOut.before(bookedStart) || newCheckIn.after(bookedEnd))) {
+                                    hasOverlap = true;
+                                    break;
+                                }
+                            } catch (Exception ignored) {}
+                        }
+                        if (hasOverlap) {
+                            showToast("Bạn đã đặt phòng trong khoảng thời gian này!");
+                            resetBookingState();
+                            return;
+                        }
+                        proceedWithBooking();
+                    })
+                    .addOnFailureListener(e -> {
+                        showToast("Lỗi kiểm tra lịch đặt phòng: " + e.getMessage());
+                        resetBookingState();
+                    });
+        } catch (Exception e) {
+            showToast("Lỗi xử lý ngày đặt phòng!");
+            resetBookingState();
+            return;
+        }
+    }
+
+    private void proceedWithBooking() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            showToast("Vui lòng đăng nhập để đặt phòng!");
+            resetBookingState();
+            return;
+        }
+
         String customerName = editCustomerName.getText().toString().trim();
         String customerPhone = editCustomerPhone.getText().toString().trim();
         String customerCCCD = editCustomerCCCD.getText().toString().trim();

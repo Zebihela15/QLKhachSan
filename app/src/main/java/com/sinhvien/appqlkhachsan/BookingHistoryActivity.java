@@ -20,6 +20,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +38,8 @@ public class BookingHistoryActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private List<InvoiceModel> invoiceList;
     private static final String TAG = "BookingHistory";
+    private SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    private SimpleDateFormat displayDateTimeFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,17 +139,36 @@ public class BookingHistoryActivity extends AppCompatActivity {
                         double totalPrice = invoiceDoc.getDouble("TongGia") != null ? invoiceDoc.getDouble("TongGia") : 0.0;
                         String status = invoiceDoc.getString("TrangThai");
 
+                        // Định dạng lại thời gian
+                        String formattedCheckIn = "N/A";
+                        String formattedCheckOut = "N/A";
+                        try {
+                            if (checkInDate != null) {
+                                formattedCheckIn = displayDateTimeFormat.format(dbFormat.parse(checkInDate));
+                            }
+                            if (checkOutDate != null) {
+                                formattedCheckOut = displayDateTimeFormat.format(dbFormat.parse(checkOutDate));
+                            }
+                        } catch (ParseException e) {
+                            Log.e(TAG, "Lỗi định dạng thời gian cho hóa đơn " + invoiceId + ": " + e.getMessage());
+                        }
+
                         // Truy vấn rooms để lấy TenPhong
+                        String finalFormattedCheckIn = formattedCheckIn;
+                        String finalFormattedCheckOut = formattedCheckOut;
+                        String finalFormattedCheckIn1 = formattedCheckIn;
+                        String finalFormattedCheckOut1 = formattedCheckOut;
                         firestore.collection("rooms")
                                 .document(maPhong)
                                 .get()
                                 .addOnSuccessListener(roomDoc -> {
-                                    String roomName = roomDoc.getString("TenPhong");
+                                    String roomName = roomDoc.exists() && roomDoc.getString("TenPhong") != null
+                                            ? roomDoc.getString("TenPhong") : "N/A";
                                     InvoiceModel invoice = new InvoiceModel(
-                                            invoiceId != null ? invoiceId : "Unknown",
-                                            roomName != null ? roomName : "Unknown",
-                                            checkInDate != null ? checkInDate : "N/A",
-                                            checkOutDate != null ? checkOutDate : "N/A",
+                                            invoiceId != null ? invoiceId : "N/A",
+                                            roomName,
+                                            finalFormattedCheckIn1,
+                                            finalFormattedCheckOut1,
                                             totalPrice,
                                             status != null ? status : "N/A"
                                     );
@@ -156,10 +179,10 @@ public class BookingHistoryActivity extends AppCompatActivity {
                                 .addOnFailureListener(e -> {
                                     Log.e(TAG, "Lỗi lấy thông tin phòng cho MaDon " + maDon + ": " + e.getMessage());
                                     InvoiceModel invoice = new InvoiceModel(
-                                            invoiceId != null ? invoiceId : "Unknown",
-                                            "Unknown",
-                                            checkInDate != null ? checkInDate : "N/A",
-                                            checkOutDate != null ? checkOutDate : "N/A",
+                                            invoiceId != null ? invoiceId : "N/A",
+                                            "N/A",
+                                            finalFormattedCheckIn,
+                                            finalFormattedCheckOut,
                                             totalPrice,
                                             status != null ? status : "N/A"
                                     );
@@ -213,7 +236,7 @@ public class BookingHistoryActivity extends AppCompatActivity {
         private final List<InvoiceModel> invoices;
         private final Context context;
 
-        InvoiceAdapter(BookingHistoryActivity context, List<InvoiceModel> invoices) {
+        InvoiceAdapter(Context context, List<InvoiceModel> invoices) {
             this.context = context;
             this.invoices = invoices;
         }
@@ -230,7 +253,7 @@ public class BookingHistoryActivity extends AppCompatActivity {
             InvoiceModel invoice = invoices.get(position);
             holder.tvInvoiceId.setText("Mã hóa đơn: " + (invoice.invoiceId != null ? invoice.invoiceId : "N/A"));
             holder.tvRoomName.setText("Phòng: " + (invoice.roomName != null ? invoice.roomName : "N/A"));
-            holder.tvDates.setText("Ngày nhận - trả: " + (invoice.checkInDate != null ? invoice.checkInDate : "N/A") + " - " + (invoice.checkOutDate != null ? invoice.checkOutDate : "N/A"));
+            holder.tvDates.setText("Thời gian nhận - trả: " + invoice.checkInDate + " - " + invoice.checkOutDate);
             holder.tvPrice.setText("Giá: " + NumberFormat.getCurrencyInstance(new Locale("vi", "VN")).format(invoice.totalPrice));
             holder.tvStatus.setText("Trạng thái: " + (invoice.status != null ? invoice.status : "N/A"));
         }
