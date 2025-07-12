@@ -1,6 +1,7 @@
 package com.sinhvien.appqlkhachsan;
 
 import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -28,12 +29,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class BookingActivity extends AppCompatActivity {
-    private TextView textRoomName, dateRange, textTotalPrice, textTotalDays;
+    private TextView textRoomName, dateRange, timeRange, textTotalPrice, textTotalDays;
     private ImageView roomImage, btnBack;
     private EditText editCustomerName, editCustomerPhone, editCustomerCCCD, editCustomerEmail, editVoucherCode;
-    private Button btnSelectDate, btnContinue;
+    private Button btnSelectDate, btnSelectTime, btnContinue;
     private double roomPrice;
-    private String checkInDate, checkOutDate;
+    private String checkInDate, checkOutDate, checkInTime, checkOutTime;
     private int roomId;
     private SharedPreferences sharedPreferences;
     private FirebaseAuth mAuth;
@@ -54,12 +55,14 @@ public class BookingActivity extends AppCompatActivity {
         textRoomName = findViewById(R.id.hotelName);
         roomImage = findViewById(R.id.hotelImage);
         dateRange = findViewById(R.id.dateRange);
+        timeRange = findViewById(R.id.timeRange);
         editCustomerName = findViewById(R.id.editCustomerName);
         editCustomerPhone = findViewById(R.id.editCustomerPhone);
         editCustomerCCCD = findViewById(R.id.editCustomerCCCD);
         editCustomerEmail = findViewById(R.id.editCustomerEmail);
         editVoucherCode = findViewById(R.id.editVoucherCode);
         btnSelectDate = findViewById(R.id.btnSelectDate);
+        btnSelectTime = findViewById(R.id.btnSelectTime);
         btnContinue = findViewById(R.id.btnContinue);
         textTotalPrice = findViewById(R.id.textTotalPrice);
         textTotalDays = findViewById(R.id.textTotalDays);
@@ -68,8 +71,10 @@ public class BookingActivity extends AppCompatActivity {
         initUserData();
         initRoomData();
         initDefaultDates();
+        initDefaultTimes();
 
         btnSelectDate.setOnClickListener(v -> showDatePickerDialog());
+        btnSelectTime.setOnClickListener(v -> showCheckInTimePickerDialog());
         btnContinue.setOnClickListener(v -> {
             if (!isBookingInProgress) {
                 isBookingInProgress = true;
@@ -154,6 +159,12 @@ public class BookingActivity extends AppCompatActivity {
         updateTotalPrice();
     }
 
+    private void initDefaultTimes() {
+        checkInTime = "14:00";
+        checkOutTime = "12:00";
+        timeRange.setText(String.format("%s - %s", checkInTime, checkOutTime));
+    }
+
     private void showDatePickerDialog() {
         Calendar calendar = Calendar.getInstance();
         DatePickerDialog datePickerDialog = new DatePickerDialog(this,
@@ -205,11 +216,35 @@ public class BookingActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
+    private void showCheckInTimePickerDialog() {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
+                (view, hourOfDay, minuteOfDay) -> {
+                    checkInTime = String.format("%02d:%02d", hourOfDay, minuteOfDay);
+                    showCheckOutTimePickerDialog();
+                }, hour, minute, true);
+        timePickerDialog.show();
+    }
+
+    private void showCheckOutTimePickerDialog() {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
+                (view, hourOfDay, minuteOfDay) -> {
+                    checkOutTime = String.format("%02d:%02d", hourOfDay, minuteOfDay);
+                    timeRange.setText(String.format("%s - %s", checkInTime, checkOutTime));
+                }, hour, minute, true);
+        timePickerDialog.show();
+    }
+
     private void isRoomAvailable(int roomId, String checkInDate, String checkOutDate, OnRoomAvailabilityListener listener) {
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            Date start = dateFormat.parse(checkInDate);
-            Date end = dateFormat.parse(checkOutDate);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            Date start = dateFormat.parse(checkInDate + " " + checkInTime);
+            Date end = dateFormat.parse(checkOutDate + " " + checkOutTime);
             firestore.collection("invoices")
                     .whereEqualTo("MaPhong", roomId)
                     .whereNotEqualTo("TrangThai", "Hủy")
@@ -253,9 +288,9 @@ public class BookingActivity extends AppCompatActivity {
 
         // Kiểm tra trùng lịch đặt phòng của người dùng
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            Date newCheckIn = dateFormat.parse(checkInDate);
-            Date newCheckOut = dateFormat.parse(checkOutDate);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            Date newCheckIn = dateFormat.parse(checkInDate + " " + checkInTime);
+            Date newCheckOut = dateFormat.parse(checkOutDate + " " + checkOutTime);
 
             firestore.collection("invoices")
                     .whereEqualTo("MaKH", maKH)
@@ -337,13 +372,13 @@ public class BookingActivity extends AppCompatActivity {
         }
 
         // Chuyển đổi định dạng ngày
-        SimpleDateFormat inputFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        SimpleDateFormat inputFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         String tgDat = dbFormat.format(new Date());
         String tgCheckIn, tgCheckOut;
         try {
-            tgCheckIn = dbFormat.format(inputFormat.parse(checkInDate));
-            tgCheckOut = dbFormat.format(inputFormat.parse(checkOutDate));
+            tgCheckIn = dbFormat.format(inputFormat.parse(checkInDate + " " + checkInTime));
+            tgCheckOut = dbFormat.format(inputFormat.parse(checkOutDate + " " + checkOutTime));
         } catch (Exception e) {
             showToast("Lỗi định dạng ngày!");
             resetBookingState();
@@ -430,8 +465,8 @@ public class BookingActivity extends AppCompatActivity {
                                                             intent.putExtra("customerCCCD", customerCCCD);
                                                             intent.putExtra("customerEmail", customerEmail);
                                                             intent.putExtra("roomName", textRoomName.getText().toString());
-                                                            intent.putExtra("checkInDate", checkInDate);
-                                                            intent.putExtra("checkOutDate", checkOutDate);
+                                                            intent.putExtra("checkInDate", checkInDate + " " + checkInTime);
+                                                            intent.putExtra("checkOutDate", checkOutDate + " " + checkOutTime);
                                                             intent.putExtra("totalPrice", totalPrice);
                                                             intent.putExtra("voucherCode", voucherCode);
                                                             intent.putExtra("status", "Đang xử lý");
@@ -528,7 +563,7 @@ public class BookingActivity extends AppCompatActivity {
     }
 
     private boolean isValidEmail(String email) {
-        return !email.isEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+        return email.isEmpty() || android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
     private boolean isValidCCCD(String cccd) {

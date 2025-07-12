@@ -39,7 +39,6 @@ public class CustomerBookingActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
     private RecyclerView rvBookings;
-    private TextView tvPendingCount, tvCompletedCount; // Thêm biến cho TextView
     private List<BookingModel> bookingList;
     private BookingAdapter bookingAdapter;
     private boolean isActive = true;
@@ -58,9 +57,6 @@ public class CustomerBookingActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // Khởi tạo các TextView cho số lượng đơn
-        tvPendingCount = findViewById(R.id.tvPendingCount);
-        tvCompletedCount = findViewById(R.id.tvCompletedCount);
         rvBookings = findViewById(R.id.rvBookings);
         rvBookings.setLayoutManager(new LinearLayoutManager(this));
 
@@ -87,9 +83,6 @@ public class CustomerBookingActivity extends AppCompatActivity {
         }
         Map<String, BookingModel> uniqueBookings = Collections.synchronizedMap(new HashMap<>());
         AtomicInteger pendingQueries = new AtomicInteger(0);
-        // Biến để đếm số đơn
-        AtomicInteger pendingCount = new AtomicInteger(0);
-        AtomicInteger completedCount = new AtomicInteger(0);
 
         db.collection("invoices").whereEqualTo("MaKH", userId).get()
                 .addOnSuccessListener(querySnapshot -> {
@@ -99,9 +92,6 @@ public class CustomerBookingActivity extends AppCompatActivity {
                     }
                     if (querySnapshot.isEmpty()) {
                         Toast.makeText(this, "Bạn chưa có đơn đặt phòng nào!", Toast.LENGTH_SHORT).show();
-                        // Cập nhật TextView về 0 khi không có đơn
-                        tvPendingCount.setText("0");
-                        tvCompletedCount.setText("0");
                         bookingAdapter.notifyDataSetChanged();
                         isLoadingBookings = false;
                         return;
@@ -120,13 +110,6 @@ public class CustomerBookingActivity extends AppCompatActivity {
                         String maGiamGia = doc.getString("MaGiamGia") != null ? doc.getString("MaGiamGia") : "";
                         String maKhachSan = doc.getString("MaKhachSan") != null ? doc.getString("MaKhachSan") : "";
 
-                        // Đếm số đơn dựa trên trạng thái
-                        if ("Chờ xác nhận".equals(trangThai) || "Đã xác nhận".equals(trangThai)) {
-                            pendingCount.incrementAndGet();
-                        } else if ("Đã trả phòng".equals(trangThai)) {
-                            completedCount.incrementAndGet();
-                        }
-
                         Task<Object> bookingTask = db.collection("bookings").document(maDon).get()
                                 .continueWithTask(task -> {
                                     if (!isActive) return Tasks.forResult(null);
@@ -141,14 +124,17 @@ public class CustomerBookingActivity extends AppCompatActivity {
                                                     DocumentSnapshot roomDoc = roomTask.getResult();
                                                     String roomName = roomDoc.exists() && roomDoc.getString("TenPhong") != null ? roomDoc.getString("TenPhong") : "N/A";
 
-                                                    Task<DocumentSnapshot> hotelTask = maKhachSan.isEmpty() ? Tasks.forResult(null) :
+                                                    // Lấy thông tin khách sạn từ maKhachSan
+                                                    Task<DocumentSnapshot> hotelTask = maKhachSan.isEmpty() ?
+                                                            Tasks.forResult(null) :
                                                             db.collection("hotels").document(maKhachSan).get();
 
                                                     return hotelTask.continueWithTask(hotelTaskResult -> {
                                                         if (!isActive) return Tasks.forResult(null);
                                                         DocumentSnapshot hotelDoc = hotelTaskResult.getResult();
-                                                        String hotelName = hotelDoc != null && hotelDoc.exists() && hotelDoc.getString("TenKhachSan") != null ?
-                                                                hotelDoc.getString("TenKhachSan") : "Khách sạn không xác định";
+                                                        // Nếu không có hotelDoc hoặc TenKhachSan rỗng, đặt giá trị mặc định là "N/A"
+                                                        String hotelName = (hotelDoc != null && hotelDoc.exists() && hotelDoc.getString("TenKhachSan") != null && !hotelDoc.getString("TenKhachSan").isEmpty()) ?
+                                                                hotelDoc.getString("TenKhachSan") : "N/A";
 
                                                         String statusMessage;
                                                         int statusColor;
@@ -221,9 +207,6 @@ public class CustomerBookingActivity extends AppCompatActivity {
                         synchronized (lock) {
                             bookingList.addAll(uniqueBookings.values());
                             bookingAdapter.notifyDataSetChanged();
-                            // Cập nhật số lượng đơn lên TextView
-                            tvPendingCount.setText(String.valueOf(pendingCount.get()));
-                            tvCompletedCount.setText(String.valueOf(completedCount.get()));
                             isLoadingBookings = false;
                         }
                     });
@@ -231,9 +214,6 @@ public class CustomerBookingActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     if (isActive) {
                         Toast.makeText(this, "Lỗi tải đơn đặt phòng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        // Cập nhật TextView về 0 nếu lỗi
-                        tvPendingCount.setText("0");
-                        tvCompletedCount.setText("0");
                         isLoadingBookings = false;
                     }
                 });
@@ -249,6 +229,7 @@ public class CustomerBookingActivity extends AppCompatActivity {
                         try {
                             Date bookingDate = tgDat.isEmpty() ? currentDate : dateFormat.parse(tgDat);
 
+                            // Kiểm tra điều kiện hủy: không được hủy nếu chưa đủ 5 ngày
                             if (!"Chờ xác nhận".equals(trangThai) &&
                                     ("Đang ở".equals(trangThai) || "Đã trả phòng".equals(trangThai)) &&
                                     currentDate.getTime() - bookingDate.getTime() < FIVE_DAYS_IN_MILLIS) {
@@ -256,36 +237,65 @@ public class CustomerBookingActivity extends AppCompatActivity {
                                 return;
                             }
 
-                            new AlertDialog.Builder(this)
-                                    .setTitle("Xác nhận yêu cầu hủy đơn")
-                                    .setMessage("Bạn có muốn gửi yêu cầu hủy đơn " + maDon + " đến quản lý?")
-                                    .setPositiveButton("Gửi yêu cầu", (dialog, which) -> {
-                                        DocumentReference notificationRef = db.collection("notifications").document();
-                                        Map<String, Object> notificationData = new HashMap<>();
-                                        notificationData.put("userId", "admin");
-                                        notificationData.put("title", "Yêu cầu hủy đơn");
-                                        notificationData.put("message", "Khách hàng yêu cầu hủy đơn " + maDon);
-                                        notificationData.put("timestamp", dateFormat.format(new Date()));
-                                        notificationData.put("isRead", false);
-                                        notificationData.put("type", "cancel_request");
-                                        notificationData.put("maDon", maDon);
-                                        notificationData.put("invoiceId", invoiceId);
+                            // Kiểm tra xem đơn đã có yêu cầu hủy trước đó chưa
+                            db.collection("bookings").document(maDon).get()
+                                    .addOnSuccessListener(bookingDoc -> {
+                                        String ghiChu = bookingDoc.getString("GhiChu") != null ? bookingDoc.getString("GhiChu") : "";
+                                        boolean canResend = ghiChu.contains("Yêu cầu hủy bị từ chối") || !ghiChu.contains("Khách hàng yêu cầu hủy");
 
-                                        notificationRef.set(notificationData)
-                                                .addOnSuccessListener(aVoid -> {
-                                                    if (isActive) {
-                                                        Toast.makeText(this, "Yêu cầu hủy đơn " + maDon + " đã được gửi!", Toast.LENGTH_LONG).show();
-                                                        loadBookings();
-                                                    }
+                                        if (!canResend) {
+                                            Toast.makeText(this, "Yêu cầu hủy đang chờ xử lý, không thể gửi lại!", Toast.LENGTH_SHORT).show();
+                                            return;
+                                        }
+
+                                        new AlertDialog.Builder(this)
+                                                .setTitle("Xác nhận yêu cầu hủy đơn")
+                                                .setMessage("Bạn có muốn gửi yêu cầu hủy đơn " + maDon + " đến quản lý?")
+                                                .setPositiveButton("Gửi yêu cầu", (dialog, which) -> {
+                                                    DocumentReference notificationRef = db.collection("notifications").document();
+                                                    Map<String, Object> notificationData = new HashMap<>();
+                                                    notificationData.put("userId", "admin");
+                                                    notificationData.put("title", "Yêu cầu hủy đơn");
+                                                    notificationData.put("message", "Khách hàng yêu cầu hủy đơn " + maDon);
+                                                    notificationData.put("timestamp", dateFormat.format(new Date()));
+                                                    notificationData.put("isRead", false);
+                                                    notificationData.put("type", "cancel_request");
+                                                    notificationData.put("maDon", maDon);
+                                                    notificationData.put("invoiceId", invoiceId);
+
+                                                    // Cập nhật ghi chú trong bookings
+                                                    Map<String, Object> bookingUpdate = new HashMap<>();
+                                                    bookingUpdate.put("GhiChu", "Khách hàng yêu cầu hủy đơn vào " + displayDateTimeFormat.format(new Date()));
+
+                                                    db.collection("bookings").document(maDon).update(bookingUpdate)
+                                                            .addOnSuccessListener(aVoid -> {
+                                                                notificationRef.set(notificationData)
+                                                                        .addOnSuccessListener(aVoid2 -> {
+                                                                            if (isActive) {
+                                                                                Toast.makeText(this, "Yêu cầu hủy đơn " + maDon + " đã được gửi!", Toast.LENGTH_LONG).show();
+                                                                                loadBookings();
+                                                                            }
+                                                                        })
+                                                                        .addOnFailureListener(e -> {
+                                                                            if (isActive) {
+                                                                                Toast.makeText(this, "Lỗi gửi yêu cầu hủy: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                                            }
+                                                                        });
+                                                            })
+                                                            .addOnFailureListener(e -> {
+                                                                if (isActive) {
+                                                                    Toast.makeText(this, "Lỗi cập nhật ghi chú: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                                }
+                                                            });
                                                 })
-                                                .addOnFailureListener(e -> {
-                                                    if (isActive) {
-                                                        Toast.makeText(this, "Lỗi gửi yêu cầu hủy: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                                    }
-                                                });
+                                                .setNegativeButton("Không", null)
+                                                .show();
                                     })
-                                    .setNegativeButton("Không", null)
-                                    .show();
+                                    .addOnFailureListener(e -> {
+                                        if (isActive) {
+                                            Toast.makeText(this, "Lỗi kiểm tra trạng thái đơn: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
                         } catch (ParseException e) {
                             Toast.makeText(this, "Lỗi xử lý ngày!", Toast.LENGTH_LONG).show();
                         }

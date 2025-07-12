@@ -192,11 +192,11 @@ public class AdminBookingListActivity extends AppCompatActivity {
                         String roomName = roomDoc.getString("TenPhong") != null ? roomDoc.getString("TenPhong") : "N/A";
                         String loaiPhong = roomDoc.getString("LoaiPhong") != null ? roomDoc.getString("LoaiPhong") : "N/A";
                         String customerName = customerDoc.getString("TenKH") != null ? customerDoc.getString("TenKH") : "N/A";
-                        String cmnd = customerDoc.getString("CMND") != null ? customerDoc.getString("CMND") : "N/A";
+                        String cmnd = customerDoc.getString("CCCD") != null ? customerDoc.getString("CCCD") : "N/A";
                         String phoneNumber = customerDoc.getString("SoDienThoai") != null ? customerDoc.getString("SoDienThoai") : "N/A";
-                        String maKhuyenMai = invoiceDoc != null && invoiceDoc.getString("MaKhuyenMai") != null ? invoiceDoc.getString("MaKhuyenMai") : "N/A";
-                        String tongTien = invoiceDoc != null && invoiceDoc.getLong("TongTien") != null ?
-                                String.format(Locale.getDefault(), "%,d VND", invoiceDoc.getLong("TongTien")) : "N/A";
+                        String maKhuyenMai = invoiceDoc != null && invoiceDoc.getString("MaGiamGia") != null ? invoiceDoc.getString("MaGiamGia") : "N/A";
+                        String tongTien = invoiceDoc != null && invoiceDoc.getDouble("TongGia") != null ?
+                                String.format(Locale.getDefault(), "%,.0f VND", invoiceDoc.getDouble("TongGia")) : "N/A";
 
                         String formattedDateRange;
                         try {
@@ -367,7 +367,7 @@ public class AdminBookingListActivity extends AppCompatActivity {
 
             if (currentTime.before(checkInDate)) {
                 new AlertDialog.Builder(this)
-                        .setMessage("Không thể check-in trước ngày nhận phòng (" + dateFormat.format(checkInDate) + ")!")
+                        .setMessage("Không thể check-in trước ngày nhận phòng (" + displayDateTimeFormat.format(checkInDate) + ")!")
                         .setPositiveButton("OK", null)
                         .show();
                 return;
@@ -591,7 +591,7 @@ public class AdminBookingListActivity extends AppCompatActivity {
 
         tvDetailBookingId.setText("Mã đơn: " + booking.maDon);
         tvDetailCustomerName.setText("Khách hàng: " + (booking.customerName != null ? booking.customerName : "N/A"));
-        tvDetailCMND.setText("CMND: " + (booking.cmnd != null ? booking.cmnd : "N/A"));
+        tvDetailCMND.setText("CCCD: " + (booking.cmnd != null ? booking.cmnd : "N/A"));
         tvDetailPhoneNumber.setText("Số điện thoại: " + (booking.phoneNumber != null ? booking.phoneNumber : "N/A"));
         tvDetailRoom.setText("Phòng: " + (booking.roomName != null ? booking.roomName + " (" + booking.loaiPhong + ")" : "N/A"));
         tvDetailDateCreated.setText("Ngày tạo: " + (booking.tgDat != null ? formatDateTime(booking.tgDat) : "N/A"));
@@ -647,6 +647,7 @@ public class AdminBookingListActivity extends AppCompatActivity {
             Toast.makeText(this, "Lỗi xử lý thời gian!", Toast.LENGTH_LONG).show();
         }
     }
+
 
     private void hasActiveBookingsForRoom(String maDon, int maPhong, java.util.function.Consumer<Boolean> callback) {
         db.collection("bookings")
@@ -903,6 +904,7 @@ public class AdminBookingListActivity extends AppCompatActivity {
             }
             holder.tvStatusIndicator.setBackgroundTintList(android.content.res.ColorStateList.valueOf(statusColor));
 
+            // Kiểm tra yêu cầu hủy dựa trên ghiChu
             boolean hasCancelRequest = booking.ghiChu != null && booking.ghiChu.contains("Khách hàng yêu cầu hủy");
             holder.tvCancelRequest.setVisibility(hasCancelRequest ? View.VISIBLE : View.GONE);
             holder.tvCancelRequest.setText(hasCancelRequest ? "⚠️ Yêu cầu hủy: " + booking.ghiChu : "");

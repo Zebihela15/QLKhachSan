@@ -156,8 +156,6 @@ public class BookingHistoryActivity extends AppCompatActivity {
                         // Truy vấn rooms để lấy TenPhong
                         String finalFormattedCheckIn = formattedCheckIn;
                         String finalFormattedCheckOut = formattedCheckOut;
-                        String finalFormattedCheckIn1 = formattedCheckIn;
-                        String finalFormattedCheckOut1 = formattedCheckOut;
                         firestore.collection("rooms")
                                 .document(maPhong)
                                 .get()
@@ -167,8 +165,8 @@ public class BookingHistoryActivity extends AppCompatActivity {
                                     InvoiceModel invoice = new InvoiceModel(
                                             invoiceId != null ? invoiceId : "N/A",
                                             roomName,
-                                            finalFormattedCheckIn1,
-                                            finalFormattedCheckOut1,
+                                            finalFormattedCheckIn,
+                                            finalFormattedCheckOut,
                                             totalPrice,
                                             status != null ? status : "N/A"
                                     );

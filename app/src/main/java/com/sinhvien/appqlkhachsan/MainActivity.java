@@ -28,6 +28,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isActive = true;
     private boolean isRoomsLoaded = false;
     private boolean isLoadingRooms = false;
+    private ListenerRegistration bookingsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,12 +141,30 @@ public class MainActivity extends AppCompatActivity {
         initializeRoomImages();
         loadRoomTypesFromFirestore();
         loadRoomsFromFirestore();
+        setupBookingsListener();
+    }
+
+    private void setupBookingsListener() {
+        bookingsListener = db.collection("bookings")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.e(TAG, "Lỗi lắng nghe bookings: " + e.getMessage());
+                        return;
+                    }
+                    if (isActive && snapshots != null) {
+                        Log.d(TAG, "Phát hiện thay đổi trong bookings, làm mới danh sách phòng");
+                        loadRoomsFromFirestore();
+                    }
+                });
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         isActive = false;
+        if (bookingsListener != null) {
+            bookingsListener.remove();
+        }
     }
 
     @Override
@@ -154,12 +174,16 @@ public class MainActivity extends AppCompatActivity {
         if (!isRoomsLoaded && !isLoadingRooms) {
             loadRoomsFromFirestore();
         }
+        setupBookingsListener();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         isActive = false;
+        if (bookingsListener != null) {
+            bookingsListener.remove();
+        }
         executorService.shutdown();
     }
 
@@ -255,6 +279,7 @@ public class MainActivity extends AppCompatActivity {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 db.collection("bookings")
                         .whereEqualTo("MaPhong", room.getMaPhong())
+                        .whereIn("TrangThaiDD", List.of("Đang xử lý", "Đã xác nhận", "Đã nhận phòng", "Trả phòng sớm"))
                         .limit(50)
                         .get()
                         .addOnSuccessListener(querySnapshot -> {
@@ -266,20 +291,20 @@ public class MainActivity extends AppCompatActivity {
                                     try {
                                         Calendar checkinCal = Calendar.getInstance();
                                         Calendar checkoutCal = Calendar.getInstance();
-                                        checkinCal.setTime(dateFormat.parse(tgCheckin));
-                                        checkoutCal.setTime(dateFormat.parse(tgCheckout));
+                                        checkinCal.setTime(dateFormat.parse(tgCheckin.split(" ")[0]));
+                                        checkoutCal.setTime(dateFormat.parse(tgCheckout.split(" ")[0]));
                                         while (!checkinCal.after(checkoutCal)) {
                                             bookedDates.put(dateFormat.format(checkinCal.getTime()), true);
                                             checkinCal.add(Calendar.DAY_OF_MONTH, 1);
                                         }
                                     } catch (Exception e) {
-                                        Log.e(TAG, "Error parsing dates", e);
+                                        Log.e(TAG, "Lỗi phân tích ngày: " + e.getMessage());
                                     }
                                 }
                             }
                             runOnUiThread(() -> updateGridLayout(gridLayout, firstDayOfMonth, daysInMonth, calendar, bookedDates));
                         })
-                        .addOnFailureListener(e -> Log.e(TAG, "Error fetching bookings", e));
+                        .addOnFailureListener(e -> Log.e(TAG, "Lỗi lấy bookings: " + e.getMessage()));
             });
         }
     }
@@ -403,6 +428,7 @@ public class MainActivity extends AppCompatActivity {
                         db.collection("bookings")
                                 .whereEqualTo("MaPhong", room.getMaPhong())
                                 .whereEqualTo("MaKH", currentUserId)
+                                .whereIn("TrangThaiDD", List.of("Đang xử lý", "Đã xác nhận", "Đã nhận phòng", "Trả phòng sớm"))
                                 .limit(1)
                                 .get()
                                 .addOnSuccessListener(bookingSnapshot -> {
