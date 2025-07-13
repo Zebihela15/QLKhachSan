@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,9 +18,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class NotificationsActivity extends AppCompatActivity {
 
@@ -120,17 +125,28 @@ public class NotificationsActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (!isActive) return;
+                    WriteBatch batch = db.batch();
                     for (QueryDocumentSnapshot doc : querySnapshot) {
-                        db.collection("notifications").document(doc.getId()).delete();
+                        batch.delete(db.collection("notifications").document(doc.getId()));
                     }
-                    notificationList.clear();
-                    notificationAdapter.notifyDataSetChanged();
-                    btnDeleteAllNotifications.setVisibility(View.GONE);
-                    Toast.makeText(this, "Đã xóa toàn bộ thông báo!", Toast.LENGTH_SHORT).show();
+                    batch.commit()
+                            .addOnSuccessListener(aVoid -> {
+                                if (isActive) {
+                                    notificationList.clear();
+                                    notificationAdapter.notifyDataSetChanged();
+                                    btnDeleteAllNotifications.setVisibility(View.GONE);
+                                    Toast.makeText(this, "Đã xóa toàn bộ thông báo!", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                if (isActive) {
+                                    Toast.makeText(this, "Lỗi xóa toàn bộ thông báo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                }
+                            });
                 })
                 .addOnFailureListener(e -> {
                     if (isActive) {
-                        Toast.makeText(this, "Lỗi xóa toàn bộ thông báo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Lỗi tải danh sách thông báo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -156,6 +172,8 @@ public class NotificationsActivity extends AppCompatActivity {
 
     private class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
         private final List<NotificationModel> notifications;
+        private final SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        private final SimpleDateFormat displayFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
 
         NotificationAdapter(List<NotificationModel> notifications) {
             this.notifications = notifications;
@@ -173,9 +191,20 @@ public class NotificationsActivity extends AppCompatActivity {
             NotificationModel notification = notifications.get(position);
             holder.titleTextView.setText(notification.getTitle() != null ? notification.getTitle() : "N/A");
             holder.messageTextView.setText(notification.getMessage() != null ? notification.getMessage() : "N/A");
-            holder.timestampTextView.setText(notification.getTimestamp() != null ? notification.getTimestamp() : "N/A");
 
-            holder.btnDelete.setOnClickListener(v -> deleteNotification(notification.getId(), position));
+            // Định dạng timestamp
+            String displayTimestamp = notification.getTimestamp();
+            if (displayTimestamp != null) {
+                try {
+                    Date date = inputFormat.parse(displayTimestamp);
+                    displayTimestamp = displayFormat.format(date);
+                } catch (ParseException e) {
+                    Log.e(TAG, "Lỗi định dạng timestamp: " + e.getMessage());
+                }
+            }
+            holder.timestampTextView.setText(displayTimestamp != null ? displayTimestamp : "N/A");
+
+            holder.btnDelete.setOnClickListener(v -> deleteNotification(notification.getId(), holder.getAdapterPosition()));
         }
 
         @Override
@@ -185,7 +214,7 @@ public class NotificationsActivity extends AppCompatActivity {
 
         class ViewHolder extends RecyclerView.ViewHolder {
             TextView titleTextView, messageTextView, timestampTextView;
-            ImageButton btnDelete;
+            LinearLayout btnDelete;
 
             ViewHolder(View itemView) {
                 super(itemView);

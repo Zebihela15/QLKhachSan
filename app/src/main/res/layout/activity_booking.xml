@@ -3,11 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="#F8F9FA">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="16dp">
 
         <!-- Header -->
@@ -16,8 +17,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingVertical="12dp"
-            app:layout_constraintTop_toTopOf="parent">
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp"
+            android:layout_marginBottom="16dp">
 
             <ImageView
                 android:id="@+id/btnBack"
@@ -32,9 +34,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Đặt Phòng"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A1A"
+                android:textColor="#212529"
                 android:gravity="center" />
 
             <ImageView
@@ -47,67 +49,61 @@
 
         </LinearLayout>
 
-        <!-- Hotel Info -->
-        <androidx.cardview.widget.CardView
+        <!-- Hotel Info Card -->
+        <LinearLayout
             android:id="@+id/hotelCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp"
-            app:layout_constraintTop_toBottomOf="@id/headerLayout">
+            android:orientation="horizontal"
+            android:background="@android:color/white"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="1dp">
+
+            <ImageView
+                android:id="@+id/hotelImage"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="#E3F2FD"
+                android:scaleType="centerCrop" />
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="12dp">
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="16dp"
+                android:layout_gravity="center_vertical">
 
-                <ImageView
-                    android:id="@+id/hotelImage"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:scaleType="centerCrop"
-                    android:background="#E8F4FD"
-                    app:cardCornerRadius="8dp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
+                <TextView
+                    android:id="@+id/hotelName"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="12dp">
+                    android:text=""
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#212529" />
 
-                    <TextView
-                        android:id="@+id/hotelName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="#1A1A1A" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TP. Hồ Chí Minh"
-                        android:textSize="14sp"
-                        android:textColor="#666666"
-                        android:layout_marginTop="4dp" />
-
-                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TP. Hồ Chí Minh"
+                    android:textSize="14sp"
+                    android:textColor="#6C757D"
+                    android:layout_marginTop="4dp" />
 
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </LinearLayout>
 
-        <!-- Booking Details -->
+        <!-- Booking Information -->
         <LinearLayout
-            android:id="@+id/bookingSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/hotelCard">
+            android:background="@android:color/white"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="1dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -115,74 +111,125 @@
                 android:text="Thông Tin Đặt Phòng"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A1A"
-                android:layout_marginBottom="12dp" />
+                android:textColor="#212529"
+                android:layout_marginBottom="16dp" />
 
+            <!-- Date Selection -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
 
                 <TextView
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
                     android:text="Ngày"
                     android:textSize="14sp"
-                    android:textColor="#666666" />
+                    android:textColor="#6C757D" />
 
                 <TextView
                     android:id="@+id/dateRange"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text=""
+                    android:text="Chọn ngày"
                     android:textSize="14sp"
-                    android:textColor="#1A1A1A" />
+                    android:textColor="#212529"
+                    android:layout_marginEnd="8dp" />
 
-                <Button
+                <TextView
                     android:id="@+id/btnSelectDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Chọn"
+                    android:text="Thay đổi"
                     android:textSize="14sp"
-                    android:textColor="#4285F4"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
+                    android:textColor="#0D6EFD"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp" />
 
             </LinearLayout>
 
+            <!-- Time Selection -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
 
                 <TextView
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
                     android:text="Giờ"
                     android:textSize="14sp"
-                    android:textColor="#666666" />
+                    android:textColor="#6C757D" />
 
                 <TextView
                     android:id="@+id/timeRange"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text=""
+                    android:text="Chọn giờ"
                     android:textSize="14sp"
-                    android:textColor="#1A1A1A" />
+                    android:textColor="#212529"
+                    android:layout_marginEnd="8dp" />
 
-                <Button
+                <TextView
                     android:id="@+id/btnSelectTime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Chọn"
+                    android:text="Thay đổi"
                     android:textSize="14sp"
-                    android:textColor="#4285F4"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
+                    android:textColor="#0D6EFD"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp" />
 
             </LinearLayout>
+
+            <!-- Guest Count -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="Số Khách"
+                    android:textSize="14sp"
+                    android:textColor="#6C757D" />
+
+                <NumberPicker
+                    android:id="@+id/numberPickerGuests"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Customer Information -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="1dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Thông Tin Khách Hàng"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#212529"
+                android:layout_marginBottom="16dp" />
 
             <EditText
                 android:id="@+id/editCustomerName"
@@ -191,9 +238,16 @@
                 android:hint="Họ và Tên"
                 android:textSize="14sp"
                 android:inputType="textPersonName"
-                android:background="@drawable/modern_input_background"
+                android:background="@null"
                 android:paddingHorizontal="12dp"
-                android:layout_marginBottom="8dp" />
+                android:paddingVertical="12dp"
+                android:layout_marginBottom="1dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E9ECEF"
+                android:layout_marginBottom="16dp" />
 
             <EditText
                 android:id="@+id/editCustomerPhone"
@@ -202,9 +256,16 @@
                 android:hint="Số Điện Thoại"
                 android:textSize="14sp"
                 android:inputType="phone"
-                android:background="@drawable/modern_input_background"
+                android:background="@null"
                 android:paddingHorizontal="12dp"
-                android:layout_marginBottom="8dp" />
+                android:paddingVertical="12dp"
+                android:layout_marginBottom="1dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E9ECEF"
+                android:layout_marginBottom="16dp" />
 
             <EditText
                 android:id="@+id/editCustomerCCCD"
@@ -213,9 +274,16 @@
                 android:hint="CCCD/Hộ Chiếu"
                 android:textSize="14sp"
                 android:inputType="number"
-                android:background="@drawable/modern_input_background"
+                android:background="@null"
                 android:paddingHorizontal="12dp"
-                android:layout_marginBottom="8dp" />
+                android:paddingVertical="12dp"
+                android:layout_marginBottom="1dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E9ECEF"
+                android:layout_marginBottom="16dp" />
 
             <EditText
                 android:id="@+id/editCustomerEmail"
@@ -224,54 +292,107 @@
                 android:hint="Email (Tùy chọn)"
                 android:textSize="14sp"
                 android:inputType="textEmailAddress"
-                android:background="@drawable/modern_input_background"
+                android:background="@null"
                 android:paddingHorizontal="12dp"
-                android:layout_marginBottom="8dp" />
+                android:paddingVertical="12dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E9ECEF" />
+
+        </LinearLayout>
+
+        <!-- Additional Options -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="1dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tùy Chọn Thêm"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#212529"
+                android:layout_marginBottom="16dp" />
 
             <EditText
                 android:id="@+id/editVoucherCode"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:hint="Mã Giảm Giá (Tùy chọn)"
+                android:hint="Mã Giảm Giá"
                 android:textSize="14sp"
                 android:inputType="text"
-                android:background="@drawable/voucher_input_background"
-                android:paddingHorizontal="12dp" />
+                android:background="@null"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="12dp"
+                android:layout_marginBottom="1dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E9ECEF"
+                android:layout_marginBottom="16dp" />
+
+            <EditText
+                android:id="@+id/editSpecialRequest"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:hint="Yêu Cầu Đặc Biệt"
+                android:textSize="14sp"
+                android:inputType="textMultiLine"
+                android:background="@null"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="12dp"
+                android:gravity="top" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E9ECEF" />
 
         </LinearLayout>
 
         <!-- Price Summary -->
         <LinearLayout
-            android:id="@+id/priceSummary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/bookingSection">
+            android:background="@android:color/white"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="1dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tổng Giá"
+                android:text="Tổng Thanh Toán"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A1A"
+                android:textColor="#212529"
                 android:layout_marginBottom="12dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
                 <TextView
                     android:id="@+id/textTotalPrice"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text=""
-                    android:textSize="20sp"
+                    android:text="0 VNĐ"
+                    android:textSize="24sp"
                     android:textStyle="bold"
-                    android:textColor="#1A1A1A" />
+                    android:textColor="#198754" />
 
                 <TextView
                     android:id="@+id/textTotalDays"
@@ -279,32 +400,31 @@
                     android:layout_height="wrap_content"
                     android:text=""
                     android:textSize="14sp"
-                    android:textColor="#666666" />
+                    android:textColor="#6C757D" />
 
             </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Giá đã bao gồm thuế và phí"
+                android:layout_marginTop="8dp"
+                android:text="Giá đã bao gồm thuế và phí dịch vụ"
                 android:textSize="12sp"
-                android:textColor="#666666" />
+                android:textColor="#6C757D" />
 
         </LinearLayout>
 
-        <!-- Continue Button -->
+        <!-- Book Button -->
         <Button
             android:id="@+id/btnContinue"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:text="Đặt Phòng"
+            android:layout_height="56dp"
+            android:text="Xác Nhận Đặt Phòng"
             android:textSize="16sp"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/modern_button_background"
-            app:layout_constraintTop_toBottomOf="@id/priceSummary" />
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:background="#0D6EFD"
+            android:layout_marginBottom="16dp" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </ScrollView>

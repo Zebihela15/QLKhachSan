@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Trạng thái khi nhấn -->
+    <item android:state_pressed="true">
+        <shape>
+            <gradient
+                android:angle="135"
+                android:startColor="#1976D2"
+                android:endColor="#0D47A1"
+                android:type="linear" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+
+    <!-- Trạng thái bình thường -->
+    <item>
+        <shape>
+            <gradient
+                android:angle="135"
+                android:startColor="#42A5F5"
+                android:endColor="#2196F3"
+                android:type="linear" />
+            <corners android:radius="28dp" />
+        </shape>
+    </item>
+
+</selector>

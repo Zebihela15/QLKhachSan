@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.NumberPicker;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -30,28 +31,32 @@ import java.util.UUID;
 
 public class BookingActivity extends AppCompatActivity {
     private TextView textRoomName, dateRange, timeRange, textTotalPrice, textTotalDays;
-    private ImageView roomImage, btnBack;
-    private EditText editCustomerName, editCustomerPhone, editCustomerCCCD, editCustomerEmail, editVoucherCode;
-    private Button btnSelectDate, btnSelectTime, btnContinue;
+    private ImageView roomImage, btnBack, btnRefresh;
+    private EditText editCustomerName, editCustomerPhone, editCustomerCCCD, editCustomerEmail, editVoucherCode, editSpecialRequest;
+    private NumberPicker numberPickerGuests;
+    private Button btnContinue;
+    private TextView btnSelectDate, btnSelectTime;
     private double roomPrice;
     private String checkInDate, checkOutDate, checkInTime, checkOutTime;
-    private int roomId;
+    private int roomId, guestCount;
     private SharedPreferences sharedPreferences;
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
     private boolean isBookingInProgress;
+    private static final double EARLY_CHECKIN_FEE = 50000; // 50,000 VND per hour before 14:00
+    private static final double LATE_CHECKOUT_FEE = 50000; // 50,000 VND per hour after 12:00
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_booking);
 
-        // Khởi tạo
+        // Initialize
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
         sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
 
-        // Ánh xạ view
+        // Bind views
         textRoomName = findViewById(R.id.hotelName);
         roomImage = findViewById(R.id.hotelImage);
         dateRange = findViewById(R.id.dateRange);
@@ -61,12 +66,24 @@ public class BookingActivity extends AppCompatActivity {
         editCustomerCCCD = findViewById(R.id.editCustomerCCCD);
         editCustomerEmail = findViewById(R.id.editCustomerEmail);
         editVoucherCode = findViewById(R.id.editVoucherCode);
+        editSpecialRequest = findViewById(R.id.editSpecialRequest);
+        numberPickerGuests = findViewById(R.id.numberPickerGuests);
         btnSelectDate = findViewById(R.id.btnSelectDate);
         btnSelectTime = findViewById(R.id.btnSelectTime);
         btnContinue = findViewById(R.id.btnContinue);
         textTotalPrice = findViewById(R.id.textTotalPrice);
         textTotalDays = findViewById(R.id.textTotalDays);
         btnBack = findViewById(R.id.btnBack);
+        btnRefresh = findViewById(R.id.btnRefresh);
+
+        // Setup NumberPicker for guest count
+        numberPickerGuests.setMinValue(2);
+        numberPickerGuests.setMaxValue(4);
+        numberPickerGuests.setValue(2);
+        numberPickerGuests.setOnValueChangedListener((picker, oldVal, newVal) -> {
+            guestCount = newVal;
+            updateTotalPrice();
+        });
 
         initUserData();
         initRoomData();
@@ -83,6 +100,15 @@ public class BookingActivity extends AppCompatActivity {
             }
         });
         btnBack.setOnClickListener(v -> finish());
+        btnRefresh.setOnClickListener(v -> {
+            initUserData();
+            initRoomData();
+            initDefaultDates();
+            initDefaultTimes();
+            numberPickerGuests.setValue(2);
+            editSpecialRequest.setText("");
+            showToast("Đã làm mới dữ liệu");
+        });
     }
 
     private void initUserData() {
@@ -98,13 +124,11 @@ public class BookingActivity extends AppCompatActivity {
         String savedPhone = sharedPreferences.getString("USER_PHONE", "");
         String savedEmail = currentUser.getEmail() != null ? currentUser.getEmail() : "";
 
-        // Điền dữ liệu mặc định
         editCustomerName.setText(savedName);
         editCustomerPhone.setText(savedPhone);
         editCustomerEmail.setText(savedEmail);
         editCustomerCCCD.setText("");
 
-        // Lấy từ Firestore
         firestore.collection("customers").document(maKH).get()
                 .addOnSuccessListener(document -> {
                     if (!isFinishing() && document.exists()) {
@@ -147,6 +171,7 @@ public class BookingActivity extends AppCompatActivity {
         if (roomPrice <= 0) {
             showToast("Giá phòng không hợp lệ!");
         }
+        guestCount = 2; // Default guest count
     }
 
     private void initDefaultDates() {
@@ -222,7 +247,11 @@ public class BookingActivity extends AppCompatActivity {
         int minute = calendar.get(Calendar.MINUTE);
         TimePickerDialog timePickerDialog = new TimePickerDialog(this,
                 (view, hourOfDay, minuteOfDay) -> {
-                    checkInTime = String.format("%02d:%02d", hourOfDay, minuteOfDay);
+                    String selectedTime = String.format("%02d:%02d", hourOfDay, minuteOfDay);
+                    if (!selectedTime.equals("14:00")) {
+                        editSpecialRequest.setText(String.format("Yêu cầu check-in lúc %s", selectedTime));
+                    }
+                    checkInTime = "14:00"; // Keep fixed check-in time
                     showCheckOutTimePickerDialog();
                 }, hour, minute, true);
         timePickerDialog.show();
@@ -234,7 +263,15 @@ public class BookingActivity extends AppCompatActivity {
         int minute = calendar.get(Calendar.MINUTE);
         TimePickerDialog timePickerDialog = new TimePickerDialog(this,
                 (view, hourOfDay, minuteOfDay) -> {
-                    checkOutTime = String.format("%02d:%02d", hourOfDay, minuteOfDay);
+                    String selectedTime = String.format("%02d:%02d", hourOfDay, minuteOfDay);
+                    if (!selectedTime.equals("12:00")) {
+                        String currentRequest = editSpecialRequest.getText().toString();
+                        String newRequest = currentRequest.isEmpty() ?
+                                String.format("Yêu cầu check-out lúc %s", selectedTime) :
+                                String.format("%s; Yêu cầu check-out lúc %s", currentRequest, selectedTime);
+                        editSpecialRequest.setText(newRequest);
+                    }
+                    checkOutTime = "12:00"; // Keep fixed check-out time
                     timeRange.setText(String.format("%s - %s", checkInTime, checkOutTime));
                 }, hour, minute, true);
         timePickerDialog.show();
@@ -286,7 +323,6 @@ public class BookingActivity extends AppCompatActivity {
 
         String maKH = currentUser.getUid();
 
-        // Kiểm tra trùng lịch đặt phòng của người dùng
         try {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             Date newCheckIn = dateFormat.parse(checkInDate + " " + checkInTime);
@@ -342,9 +378,9 @@ public class BookingActivity extends AppCompatActivity {
         String customerCCCD = editCustomerCCCD.getText().toString().trim();
         String customerEmail = editCustomerEmail.getText().toString().trim();
         String voucherCode = editVoucherCode.getText().toString().trim();
+        String specialRequest = editSpecialRequest.getText().toString().trim();
         String maKH = currentUser.getUid();
 
-        // Kiểm tra dữ liệu
         if (customerName.isEmpty() || customerPhone.isEmpty() || customerCCCD.isEmpty()) {
             showToast("Vui lòng nhập đầy đủ thông tin!");
             resetBookingState();
@@ -370,8 +406,12 @@ public class BookingActivity extends AppCompatActivity {
             resetBookingState();
             return;
         }
+        if (guestCount < 2 || guestCount > 4) {
+            showToast("Số lượng khách phải từ 2 đến 4!");
+            resetBookingState();
+            return;
+        }
 
-        // Chuyển đổi định dạng ngày
         SimpleDateFormat inputFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         String tgDat = dbFormat.format(new Date());
@@ -385,31 +425,28 @@ public class BookingActivity extends AppCompatActivity {
             return;
         }
 
-        // Tính tổng giá
         double baseTotalPrice = calculateTotalPrice();
         if (baseTotalPrice <= 0) {
             resetBookingState();
             return;
         }
 
-        // Kiểm tra mã giảm giá
         if (!voucherCode.isEmpty()) {
             getVoucherDiscount(voucherCode, discount -> {
                 double finalTotalPrice = baseTotalPrice * (1 - discount / 100);
                 if (discount == 0 && !voucherCode.isEmpty()) {
                     showToast("Mã giảm giá không hợp lệ!");
                 }
-                saveBooking(maKH, customerName, customerPhone, customerCCCD, customerEmail, voucherCode, tgDat, tgCheckIn, tgCheckOut, finalTotalPrice);
+                saveBooking(maKH, customerName, customerPhone, customerCCCD, customerEmail, voucherCode, tgDat, tgCheckIn, tgCheckOut, finalTotalPrice, specialRequest);
             });
         } else {
-            saveBooking(maKH, customerName, customerPhone, customerCCCD, customerEmail, voucherCode, tgDat, tgCheckIn, tgCheckOut, baseTotalPrice);
+            saveBooking(maKH, customerName, customerPhone, customerCCCD, customerEmail, voucherCode, tgDat, tgCheckIn, tgCheckOut, baseTotalPrice, specialRequest);
         }
     }
 
     private void saveBooking(String maKH, String customerName, String customerPhone, String customerCCCD,
                              String customerEmail, String voucherCode, String tgDat, String tgCheckIn,
-                             String tgCheckOut, double totalPrice) {
-        // Lưu thông tin khách hàng
+                             String tgCheckOut, double totalPrice, String specialRequest) {
         Map<String, Object> customerData = new HashMap<>();
         customerData.put("MaKH", maKH);
         customerData.put("TenKH", customerName);
@@ -419,7 +456,6 @@ public class BookingActivity extends AppCompatActivity {
 
         firestore.collection("customers").document(maKH).set(customerData)
                 .addOnSuccessListener(aVoid -> {
-                    // Lưu đơn đặt phòng
                     Map<String, Object> bookingData = new HashMap<>();
                     bookingData.put("MaKH", maKH);
                     bookingData.put("MaPhong", roomId);
@@ -429,11 +465,12 @@ public class BookingActivity extends AppCompatActivity {
                     bookingData.put("TGCheckout", tgCheckOut);
                     bookingData.put("TrangThaiTT", "Chưa thanh toán");
                     bookingData.put("TrangThaiDD", "Đang xử lý");
+                    bookingData.put("SoKhach", guestCount);
+                    bookingData.put("YeuCauDacBiet", specialRequest.isEmpty() ? null : specialRequest);
 
                     firestore.collection("bookings").add(bookingData)
                             .addOnSuccessListener(documentReference -> {
                                 String maDon = documentReference.getId();
-                                // Lưu hóa đơn
                                 String invoiceId = UUID.randomUUID().toString();
                                 Map<String, Object> invoiceData = new HashMap<>();
                                 invoiceData.put("MaHoaDon", invoiceId);
@@ -449,15 +486,15 @@ public class BookingActivity extends AppCompatActivity {
                                 invoiceData.put("TongGia", totalPrice);
                                 invoiceData.put("TrangThai", "Đang xử lý");
                                 invoiceData.put("MaGiamGia", voucherCode.isEmpty() ? null : voucherCode);
+                                invoiceData.put("SoKhach", guestCount);
+                                invoiceData.put("YeuCauDacBiet", specialRequest.isEmpty() ? null : specialRequest);
 
                                 firestore.collection("invoices").document(invoiceId).set(invoiceData)
                                         .addOnSuccessListener(aVoid1 -> {
-                                            // Cập nhật trạng thái phòng
                                             firestore.collection("rooms").document(String.valueOf(roomId))
                                                     .update("TrangThai", "Đã đặt")
                                                     .addOnSuccessListener(aVoid2 -> {
                                                         if (!isFinishing()) {
-                                                            // Chuyển sang InvoiceActivity
                                                             Intent intent = new Intent(this, InvoiceActivity.class);
                                                             intent.putExtra("invoiceId", invoiceId);
                                                             intent.putExtra("customerName", customerName);
@@ -469,10 +506,11 @@ public class BookingActivity extends AppCompatActivity {
                                                             intent.putExtra("checkOutDate", checkOutDate + " " + checkOutTime);
                                                             intent.putExtra("totalPrice", totalPrice);
                                                             intent.putExtra("voucherCode", voucherCode);
+                                                            intent.putExtra("guestCount", guestCount);
+                                                            intent.putExtra("specialRequest", specialRequest);
                                                             intent.putExtra("status", "Đang xử lý");
                                                             startActivity(intent);
 
-                                                            // Lưu vào SharedPreferences
                                                             sharedPreferences.edit()
                                                                     .putString("USER_NAME", customerName)
                                                                     .putString("USER_PHONE", customerPhone)
@@ -528,9 +566,31 @@ public class BookingActivity extends AppCompatActivity {
                 showToast("Ngày không hợp lệ!");
                 return 0;
             }
-            double totalPrice = roomPrice * diffInDays;
-            if (diffInDays >= 5 && diffInDays <= 10) totalPrice *= 0.9;
-            return totalPrice;
+            double basePrice = roomPrice * diffInDays * guestCount;
+            if (diffInDays >= 5 && diffInDays <= 10) basePrice *= 0.9;
+
+            // Calculate additional fees for special requests
+            double additionalFee = 0;
+            String specialRequest = editSpecialRequest.getText().toString().trim();
+            if (!specialRequest.isEmpty()) {
+                if (specialRequest.contains("check-in")) {
+                    String[] parts = specialRequest.split("check-in lúc ");
+                    if (parts.length > 1) {
+                        String time = parts[1].split(";")[0].trim();
+                        int hoursEarly = 14 - Integer.parseInt(time.split(":")[0]);
+                        if (hoursEarly > 0) additionalFee += hoursEarly * EARLY_CHECKIN_FEE;
+                    }
+                }
+                if (specialRequest.contains("check-out")) {
+                    String[] parts = specialRequest.split("check-out lúc ");
+                    if (parts.length > 1) {
+                        String time = parts[1].trim();
+                        int hoursLate = Integer.parseInt(time.split(":")[0]) - 12;
+                        if (hoursLate > 0) additionalFee += hoursLate * LATE_CHECKOUT_FEE;
+                    }
+                }
+            }
+            return basePrice + additionalFee;
         } catch (Exception e) {
             showToast("Lỗi tính giá!");
             return 0;
@@ -544,15 +604,15 @@ public class BookingActivity extends AppCompatActivity {
             Date dateCheckOut = dateFormat.parse(checkOutDate);
             long diffInDays = (dateCheckOut.getTime() - dateCheckIn.getTime()) / (1000 * 60 * 60 * 24);
             if (diffInDays <= 0) {
-                textTotalPrice.setText("Không hợp lệ");
+                textTotalPrice.setText("0 VNĐ");
                 textTotalDays.setText("0 ngày");
                 return;
             }
             double totalPrice = calculateTotalPrice();
             textTotalPrice.setText(NumberFormat.getCurrencyInstance(new Locale("vi", "VN")).format(totalPrice));
-            textTotalDays.setText(diffInDays + " ngày");
+            textTotalDays.setText(diffInDays + " ngày, " + guestCount + " khách");
         } catch (Exception e) {
-            textTotalPrice.setText("Lỗi giá");
+            textTotalPrice.setText("0 VNĐ");
             textTotalDays.setText("0 ngày");
             showToast("Lỗi hiển thị giá!");
         }
