@@ -1,20 +1,20 @@
 package com.sinhvien.appqlkhachsan;
 
 import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.NumberPicker;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -30,37 +30,37 @@ import java.util.Map;
 import java.util.UUID;
 
 public class BookingActivity extends AppCompatActivity {
+    private static final String TAG = "BookingActivity";
     private TextView textRoomName, dateRange, timeRange, textTotalPrice, textTotalDays;
-    private ImageView roomImage, btnBack, btnRefresh;
+    private TextView btnSelectDate;
+    private ImageView btnBack, btnRefresh;
     private EditText editCustomerName, editCustomerPhone, editCustomerCCCD, editCustomerEmail, editVoucherCode, editSpecialRequest;
     private NumberPicker numberPickerGuests;
     private Button btnContinue;
-    private TextView btnSelectDate, btnSelectTime;
     private double roomPrice;
-    private String checkInDate, checkOutDate, checkInTime, checkOutTime;
+    private String checkInDate, checkOutDate;
+    private final String checkInTime = "14:00";
+    private final String checkOutTime = "12:00";
     private int roomId, guestCount;
     private SharedPreferences sharedPreferences;
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
     private boolean isBookingInProgress;
-    private static final double EARLY_CHECKIN_FEE = 50000; // 50,000 VND per hour before 14:00
-    private static final double LATE_CHECKOUT_FEE = 50000; // 50,000 VND per hour after 12:00
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_booking);
 
-        // Initialize
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
         sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
 
-        // Bind views
         textRoomName = findViewById(R.id.hotelName);
-        roomImage = findViewById(R.id.hotelImage);
         dateRange = findViewById(R.id.dateRange);
         timeRange = findViewById(R.id.timeRange);
+        textTotalPrice = findViewById(R.id.textTotalPrice);
+        textTotalDays = findViewById(R.id.textTotalDays);
         editCustomerName = findViewById(R.id.editCustomerName);
         editCustomerPhone = findViewById(R.id.editCustomerPhone);
         editCustomerCCCD = findViewById(R.id.editCustomerCCCD);
@@ -69,14 +69,21 @@ public class BookingActivity extends AppCompatActivity {
         editSpecialRequest = findViewById(R.id.editSpecialRequest);
         numberPickerGuests = findViewById(R.id.numberPickerGuests);
         btnSelectDate = findViewById(R.id.btnSelectDate);
-        btnSelectTime = findViewById(R.id.btnSelectTime);
         btnContinue = findViewById(R.id.btnContinue);
-        textTotalPrice = findViewById(R.id.textTotalPrice);
-        textTotalDays = findViewById(R.id.textTotalDays);
         btnBack = findViewById(R.id.btnBack);
         btnRefresh = findViewById(R.id.btnRefresh);
 
-        // Setup NumberPicker for guest count
+        if (textRoomName == null || dateRange == null || timeRange == null || textTotalPrice == null ||
+                textTotalDays == null || editCustomerName == null || editCustomerPhone == null ||
+                editCustomerCCCD == null || editCustomerEmail == null || editVoucherCode == null ||
+                editSpecialRequest == null || numberPickerGuests == null || btnSelectDate == null ||
+                btnContinue == null || btnBack == null || btnRefresh == null) {
+            Log.e(TAG, "One or more views are null");
+            showSnackbar("Lỗi giao diện, vui lòng kiểm tra layout!");
+            finish();
+            return;
+        }
+
         numberPickerGuests.setMinValue(2);
         numberPickerGuests.setMaxValue(4);
         numberPickerGuests.setValue(2);
@@ -85,13 +92,11 @@ public class BookingActivity extends AppCompatActivity {
             updateTotalPrice();
         });
 
-        initUserData();
         initRoomData();
         initDefaultDates();
         initDefaultTimes();
 
         btnSelectDate.setOnClickListener(v -> showDatePickerDialog());
-        btnSelectTime.setOnClickListener(v -> showCheckInTimePickerDialog());
         btnContinue.setOnClickListener(v -> {
             if (!isBookingInProgress) {
                 isBookingInProgress = true;
@@ -101,108 +106,121 @@ public class BookingActivity extends AppCompatActivity {
         });
         btnBack.setOnClickListener(v -> finish());
         btnRefresh.setOnClickListener(v -> {
-            initUserData();
             initRoomData();
             initDefaultDates();
             initDefaultTimes();
             numberPickerGuests.setValue(2);
+            editCustomerName.setText("");
+            editCustomerPhone.setText("");
+            editCustomerCCCD.setText("");
+            editCustomerEmail.setText("");
             editSpecialRequest.setText("");
-            showToast("Đã làm mới dữ liệu");
+            showSnackbar("Đã làm mới dữ liệu");
         });
     }
 
-    private void initUserData() {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) {
-            showToast("Vui lòng đăng nhập!");
-            finish();
-            return;
-        }
-
-        String maKH = currentUser.getUid();
-        String savedName = currentUser.getDisplayName() != null ? currentUser.getDisplayName() : "";
-        String savedPhone = sharedPreferences.getString("USER_PHONE", "");
-        String savedEmail = currentUser.getEmail() != null ? currentUser.getEmail() : "";
-
-        editCustomerName.setText(savedName);
-        editCustomerPhone.setText(savedPhone);
-        editCustomerEmail.setText(savedEmail);
-        editCustomerCCCD.setText("");
-
-        firestore.collection("customers").document(maKH).get()
-                .addOnSuccessListener(document -> {
-                    if (!isFinishing() && document.exists()) {
-                        String name = document.getString("TenKH") != null ? document.getString("TenKH") : savedName;
-                        String phone = document.getString("SDT") != null ? document.getString("SDT") : savedPhone;
-                        String email = document.getString("Email") != null ? document.getString("Email") : savedEmail;
-                        String cccd = document.getString("CCCD") != null ? document.getString("CCCD") : "";
-                        editCustomerName.setText(name);
-                        editCustomerPhone.setText(phone);
-                        editCustomerEmail.setText(email);
-                        editCustomerCCCD.setText(cccd);
-                    } else {
-                        firestore.collection("users").document(maKH).get()
-                                .addOnSuccessListener(userDoc -> {
-                                    if (!isFinishing() && userDoc.exists()) {
-                                        String name = userDoc.getString("fullName") != null ? userDoc.getString("fullName") : savedName;
-                                        String email = userDoc.getString("email") != null ? userDoc.getString("email") : savedEmail;
-                                        editCustomerName.setText(name);
-                                        editCustomerPhone.setText(savedPhone);
-                                        editCustomerEmail.setText(email);
-                                        editCustomerCCCD.setText("");
-                                    }
-                                });
-                    }
-                });
+    private void showSnackbar(String message) {
+        Log.d(TAG, "Displaying Snackbar: " + message);
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) {
+                Log.e(TAG, "Cannot display Snackbar: Activity is finishing or destroyed");
+                return;
+            }
+            try {
+                Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
+                Log.d(TAG, "Snackbar displayed successfully: " + message);
+            } catch (Exception e) {
+                Log.e(TAG, "Error displaying Snackbar: " + e.getMessage());
+            }
+        });
     }
 
     private void initRoomData() {
         Intent intent = getIntent();
         roomId = intent.getIntExtra("ROOM_ID", 0);
         String roomName = intent.getStringExtra("roomName");
-        if (roomName == null || roomId == 0) {
-            showToast("Không nhận được thông tin phòng!");
+        roomPrice = intent.getDoubleExtra("price", 0.0);
+        String selectedDate = intent.getStringExtra("selectedDate");
+        guestCount = 2;
+
+        Log.d(TAG, "initRoomData - roomId: " + roomId + ", roomName: " + roomName + ", price: " + roomPrice + ", selectedDate: " + selectedDate);
+
+        if (roomName == null || roomId == 0 || roomPrice <= 0) {
+            Log.e(TAG, "Invalid room data: roomId=" + roomId + ", roomName=" + roomName + ", price=" + roomPrice);
+            showSnackbar("Thông tin phòng không hợp lệ!");
             finish();
             return;
         }
-        textRoomName.setText(roomName);
-        roomImage.setImageResource(intent.getIntExtra("imageResource", R.drawable.ic_launcher_background));
-        roomPrice = intent.getDoubleExtra("price", 0.0);
-        if (roomPrice <= 0) {
-            showToast("Giá phòng không hợp lệ!");
+        if (selectedDate != null && selectedDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            checkInDate = selectedDate;
+        } else {
+            Log.e(TAG, "Invalid selectedDate: " + selectedDate);
+            checkInDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         }
-        guestCount = 2; // Default guest count
+        textRoomName.setText(roomName);
     }
 
     private void initDefaultDates() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-        Calendar calendar = Calendar.getInstance();
-        checkInDate = dateFormat.format(calendar.getTime());
-        calendar.add(Calendar.DAY_OF_MONTH, 1);
-        checkOutDate = dateFormat.format(calendar.getTime());
-        dateRange.setText(String.format("%s - %s", checkInDate, checkOutDate));
-        updateTotalPrice();
+        try {
+            SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            SimpleDateFormat displayFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            Calendar calendar = Calendar.getInstance();
+
+            if (checkInDate == null || checkInDate.isEmpty()) {
+                checkInDate = dbFormat.format(calendar.getTime());
+            }
+            calendar.setTime(dbFormat.parse(checkInDate));
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            checkOutDate = dbFormat.format(calendar.getTime());
+
+            Date checkIn = dbFormat.parse(checkInDate);
+            Date checkOut = dbFormat.parse(checkOutDate);
+            if (checkIn != null && checkOut != null) {
+                dateRange.setText(String.format("%s - %s", displayFormat.format(checkIn), displayFormat.format(checkOut)));
+            } else {
+                dateRange.setText("Chọn ngày");
+                showSnackbar("Ngày không hợp lệ!");
+            }
+            updateTotalPrice();
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in initDefaultDates: " + e.getMessage());
+            dateRange.setText("Chọn ngày");
+            showSnackbar("Lỗi khởi tạo ngày!");
+        }
     }
 
     private void initDefaultTimes() {
-        checkInTime = "14:00";
-        checkOutTime = "12:00";
         timeRange.setText(String.format("%s - %s", checkInTime, checkOutTime));
+        updateTotalPrice();
     }
 
     private void showDatePickerDialog() {
         Calendar calendar = Calendar.getInstance();
+        if (checkInDate != null && !checkInDate.isEmpty()) {
+            try {
+                calendar.setTime(new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(checkInDate));
+            } catch (Exception ignored) {}
+        }
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
         DatePickerDialog datePickerDialog = new DatePickerDialog(this,
-                (view, year, month, day) -> {
+                (view, selectedYear, selectedMonth, selectedDay) -> {
                     if (isFinishing()) return;
-                    calendar.set(year, month, day);
-                    if (calendar.getTime().before(new Date())) {
-                        showToast("Không thể chọn ngày quá khứ!");
-                        return;
+                    checkInDate = String.format(Locale.getDefault(), "%d-%02d-%02d", selectedYear, selectedMonth + 1, selectedDay);
+                    try {
+                        SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        if (dbFormat.parse(checkInDate).before(new Date())) {
+                            showSnackbar("Không thể chọn ngày quá khứ!");
+                            return;
+                        }
+                        showCheckOutDatePickerDialog();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception in showDatePickerDialog: " + e.getMessage());
+                        showSnackbar("Lỗi xử lý ngày!");
                     }
-                    checkInDate = String.format("%02d/%02d/%d", day, month + 1, year);
-                    showCheckOutDatePickerDialog();
-                }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                }, year, month, day);
         datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
         datePickerDialog.show();
     }
@@ -210,78 +228,65 @@ public class BookingActivity extends AppCompatActivity {
     private void showCheckOutDatePickerDialog() {
         Calendar calendar = Calendar.getInstance();
         try {
-            calendar.setTime(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(checkInDate));
-            calendar.add(Calendar.DAY_OF_MONTH, 1);
-        } catch (Exception ignored) {}
+            SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            if (checkInDate != null && !checkInDate.isEmpty()) {
+                calendar.setTime(dbFormat.parse(checkInDate));
+                calendar.add(Calendar.DAY_OF_MONTH, 1);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in showCheckOutDatePickerDialog init: " + e.getMessage());
+            showSnackbar("Lỗi khởi tạo ngày nhận phòng!");
+        }
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
         DatePickerDialog datePickerDialog = new DatePickerDialog(this,
-                (view, year, month, day) -> {
+                (view, selectedYear, selectedMonth, selectedDay) -> {
                     if (isFinishing()) return;
-                    calendar.set(year, month, day);
+                    checkOutDate = String.format(Locale.getDefault(), "%d-%02d-%02d", selectedYear, selectedMonth + 1, selectedDay);
                     try {
-                        if (calendar.getTime().before(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(checkInDate))) {
-                            showToast("Ngày trả phòng phải sau ngày nhận phòng!");
+                        SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        SimpleDateFormat displayFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+                        Date checkIn = dbFormat.parse(checkInDate);
+                        Date checkOut = dbFormat.parse(checkOutDate);
+                        if (checkOut.before(checkIn)) {
+                            showSnackbar("Ngày trả phòng phải sau ngày nhận phòng!");
                             return;
                         }
-                        checkOutDate = String.format("%02d/%02d/%d", day, month + 1, year);
                         isRoomAvailable(roomId, checkInDate, checkOutDate, isAvailable -> {
                             if (!isFinishing()) {
                                 if (!isAvailable) {
-                                    showToast("Phòng đã được đặt trong khoảng thời gian này!");
+                                    showSnackbar("Phòng đã được đặt trong khoảng thời gian này!");
                                     return;
                                 }
-                                dateRange.setText(String.format("%s - %s", checkInDate, checkOutDate));
-                                updateTotalPrice();
+                                if (checkIn != null && checkOut != null) {
+                                    dateRange.setText(String.format("%s - %s", displayFormat.format(checkIn), displayFormat.format(checkOut)));
+                                    updateTotalPrice();
+                                } else {
+                                    dateRange.setText("Chọn ngày");
+                                    showSnackbar("Ngày không hợp lệ!");
+                                }
                             }
                         });
                     } catch (Exception e) {
-                        showToast("Lỗi xử lý ngày!");
+                        Log.e(TAG, "Exception in showCheckOutDatePickerDialog: " + e.getMessage());
+                        showSnackbar("Lỗi xử lý ngày!");
+                        dateRange.setText("Chọn ngày");
                     }
-                }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                }, year, month, day);
         datePickerDialog.getDatePicker().setMinDate(calendar.getTimeInMillis());
         datePickerDialog.show();
     }
 
-    private void showCheckInTimePickerDialog() {
-        Calendar calendar = Calendar.getInstance();
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
-                (view, hourOfDay, minuteOfDay) -> {
-                    String selectedTime = String.format("%02d:%02d", hourOfDay, minuteOfDay);
-                    if (!selectedTime.equals("14:00")) {
-                        editSpecialRequest.setText(String.format("Yêu cầu check-in lúc %s", selectedTime));
-                    }
-                    checkInTime = "14:00"; // Keep fixed check-in time
-                    showCheckOutTimePickerDialog();
-                }, hour, minute, true);
-        timePickerDialog.show();
-    }
-
-    private void showCheckOutTimePickerDialog() {
-        Calendar calendar = Calendar.getInstance();
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
-                (view, hourOfDay, minuteOfDay) -> {
-                    String selectedTime = String.format("%02d:%02d", hourOfDay, minuteOfDay);
-                    if (!selectedTime.equals("12:00")) {
-                        String currentRequest = editSpecialRequest.getText().toString();
-                        String newRequest = currentRequest.isEmpty() ?
-                                String.format("Yêu cầu check-out lúc %s", selectedTime) :
-                                String.format("%s; Yêu cầu check-out lúc %s", currentRequest, selectedTime);
-                        editSpecialRequest.setText(newRequest);
-                    }
-                    checkOutTime = "12:00"; // Keep fixed check-out time
-                    timeRange.setText(String.format("%s - %s", checkInTime, checkOutTime));
-                }, hour, minute, true);
-        timePickerDialog.show();
-    }
-
     private void isRoomAvailable(int roomId, String checkInDate, String checkOutDate, OnRoomAvailabilityListener listener) {
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-            Date start = dateFormat.parse(checkInDate + " " + checkInTime);
-            Date end = dateFormat.parse(checkOutDate + " " + checkOutTime);
+            SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            String start = checkInDate + " " + checkInTime + ":00";
+            String end = checkOutDate + " " + checkOutTime + ":00";
+            Date startDate = dbFormat.parse(start);
+            Date endDate = dbFormat.parse(end);
+            Log.d(TAG, "isRoomAvailable - roomId: " + roomId + ", start: " + start + ", end: " + end);
             firestore.collection("invoices")
                     .whereEqualTo("MaPhong", roomId)
                     .whereNotEqualTo("TrangThai", "Hủy")
@@ -293,18 +298,26 @@ public class BookingActivity extends AppCompatActivity {
                                 String bookedStartStr = document.getString("TGCheckin");
                                 String bookedEndStr = document.getString("TGCheckout");
                                 if (bookedStartStr == null || bookedEndStr == null) continue;
-                                Date bookedStart = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(bookedStartStr);
-                                Date bookedEnd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(bookedEndStr);
-                                if (!(end.before(bookedStart) || start.after(bookedEnd))) {
+                                Date bookedStart = dbFormat.parse(bookedStartStr);
+                                Date bookedEnd = dbFormat.parse(bookedEndStr);
+                                if (!(endDate.before(bookedStart) || startDate.after(bookedEnd))) {
                                     isAvailable = false;
+                                    Log.d(TAG, "Room conflict found: bookedStart=" + bookedStartStr + ", bookedEnd=" + bookedEndStr);
                                     break;
                                 }
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing booked dates: " + e.getMessage());
+                            }
                         }
+                        Log.d(TAG, "Room availability: " + isAvailable);
                         listener.onResult(isAvailable);
                     })
-                    .addOnFailureListener(e -> listener.onResult(false));
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Error checking room availability: " + e.getMessage());
+                        listener.onResult(false);
+                    });
         } catch (Exception e) {
+            Log.e(TAG, "Exception in isRoomAvailable: " + e.getMessage());
             listener.onResult(false);
         }
     }
@@ -316,59 +329,52 @@ public class BookingActivity extends AppCompatActivity {
     private void handleBooking() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
-            showToast("Vui lòng đăng nhập để đặt phòng!");
+            Log.e(TAG, "User not logged in");
+            showSnackbar("Vui lòng đăng nhập để đặt phòng!");
             resetBookingState();
             return;
         }
 
         String maKH = currentUser.getUid();
+        Log.d(TAG, "handleBooking - maKH: " + maKH + ", roomId: " + roomId + ", checkInDate: " + checkInDate + ", checkOutDate: " + checkOutDate);
 
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-            Date newCheckIn = dateFormat.parse(checkInDate + " " + checkInTime);
-            Date newCheckOut = dateFormat.parse(checkOutDate + " " + checkOutTime);
+            SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+            String start = checkInDate + " " + checkInTime + ":00";
+            String end = checkOutDate + " " + checkOutTime + ":00";
+            Date newCheckIn = dbFormat.parse(start);
+            Date newCheckOut = dbFormat.parse(end);
 
-            firestore.collection("invoices")
-                    .whereEqualTo("MaKH", maKH)
-                    .whereNotEqualTo("TrangThai", "Hủy")
-                    .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        boolean hasOverlap = false;
-                        for (DocumentSnapshot document : querySnapshot) {
-                            try {
-                                String bookedStartStr = document.getString("TGCheckin");
-                                String bookedEndStr = document.getString("TGCheckout");
-                                if (bookedStartStr == null || bookedEndStr == null) continue;
-                                Date bookedStart = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(bookedStartStr);
-                                Date bookedEnd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(bookedEndStr);
-                                if (!(newCheckOut.before(bookedStart) || newCheckIn.after(bookedEnd))) {
-                                    hasOverlap = true;
-                                    break;
-                                }
-                            } catch (Exception ignored) {}
-                        }
-                        if (hasOverlap) {
-                            showToast("Bạn đã đặt phòng trong khoảng thời gian này!");
-                            resetBookingState();
-                            return;
-                        }
-                        proceedWithBooking();
-                    })
-                    .addOnFailureListener(e -> {
-                        showToast("Lỗi kiểm tra lịch đặt phòng: " + e.getMessage());
+            if (newCheckIn == null || newCheckOut == null) {
+                Log.e(TAG, "Invalid check-in/check-out dates: start=" + start + ", end=" + end);
+                showSnackbar("Lỗi định dạng ngày đặt phòng!");
+                resetBookingState();
+                return;
+            }
+
+            isRoomAvailable(roomId, checkInDate, checkOutDate, isAvailable -> {
+                if (!isFinishing()) {
+                    if (!isAvailable) {
+                        Log.e(TAG, "Room not available for dates: " + start + " to " + end);
+                        showSnackbar("Phòng đã được đặt trong khoảng thời gian này!");
                         resetBookingState();
-                    });
+                        return;
+                    }
+                    proceedWithBooking();
+                }
+            });
         } catch (Exception e) {
-            showToast("Lỗi xử lý ngày đặt phòng!");
+            Log.e(TAG, "Exception in handleBooking: " + e.getMessage());
+            showSnackbar("Lỗi xử lý ngày đặt phòng!");
             resetBookingState();
-            return;
         }
     }
 
     private void proceedWithBooking() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
-            showToast("Vui lòng đăng nhập để đặt phòng!");
+            Log.e(TAG, "User not logged in in proceedWithBooking");
+            showSnackbar("Vui lòng đăng nhập để đặt phòng!");
             resetBookingState();
             return;
         }
@@ -381,52 +387,57 @@ public class BookingActivity extends AppCompatActivity {
         String specialRequest = editSpecialRequest.getText().toString().trim();
         String maKH = currentUser.getUid();
 
+        Log.d(TAG, "proceedWithBooking - customerName: " + customerName + ", phone: " + customerPhone + ", CCCD: " + customerCCCD + ", email: " + customerEmail + ", voucher: " + voucherCode);
+
         if (customerName.isEmpty() || customerPhone.isEmpty() || customerCCCD.isEmpty()) {
-            showToast("Vui lòng nhập đầy đủ thông tin!");
+            Log.e(TAG, "Missing required fields: name=" + customerName + ", phone=" + customerPhone + ", CCCD=" + customerCCCD);
+            showSnackbar("Vui lòng nhập đầy đủ thông tin!");
             resetBookingState();
             return;
         }
         if (!isValidPhone(customerPhone)) {
-            editCustomerPhone.setError("Số điện thoại phải là 10 số!");
-            resetBookingState();
-            return;
-        }
-        if (!isValidEmail(customerEmail)) {
-            editCustomerEmail.setError("Email không hợp lệ!");
+            Log.e(TAG, "Invalid phone: " + customerPhone);
+            editCustomerPhone.setError("Số điện thoại phải là 10 số, bắt đầu bằng 0!");
+            showSnackbar("Số điện thoại không hợp lệ!");
             resetBookingState();
             return;
         }
         if (!isValidCCCD(customerCCCD)) {
+            Log.e(TAG, "Invalid CCCD: " + customerCCCD);
             editCustomerCCCD.setError("CCCD phải là 12 số!");
+            showSnackbar("CCCD không hợp lệ!");
+            resetBookingState();
+            return;
+        }
+        if (!isValidEmail(customerEmail)) {
+            Log.e(TAG, "Invalid email: " + customerEmail);
+            editCustomerEmail.setError("Email phải kết thúc bằng @gmail.com!");
+            showSnackbar("Email không hợp lệ!");
             resetBookingState();
             return;
         }
         if (roomId == 0) {
-            showToast("Phòng không hợp lệ!");
+            Log.e(TAG, "Invalid roomId: " + roomId);
+            showSnackbar("Phòng không hợp lệ!");
             resetBookingState();
             return;
         }
         if (guestCount < 2 || guestCount > 4) {
-            showToast("Số lượng khách phải từ 2 đến 4!");
+            Log.e(TAG, "Invalid guestCount: " + guestCount);
+            showSnackbar("Số lượng khách phải từ 2 đến 4!");
             resetBookingState();
             return;
         }
 
-        SimpleDateFormat inputFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         String tgDat = dbFormat.format(new Date());
-        String tgCheckIn, tgCheckOut;
-        try {
-            tgCheckIn = dbFormat.format(inputFormat.parse(checkInDate + " " + checkInTime));
-            tgCheckOut = dbFormat.format(inputFormat.parse(checkOutDate + " " + checkOutTime));
-        } catch (Exception e) {
-            showToast("Lỗi định dạng ngày!");
-            resetBookingState();
-            return;
-        }
+        String tgCheckIn = checkInDate + " " + checkInTime + ":00";
+        String tgCheckOut = checkOutDate + " " + checkOutTime + ":00";
 
         double baseTotalPrice = calculateTotalPrice();
         if (baseTotalPrice <= 0) {
+            Log.e(TAG, "Invalid total price: " + baseTotalPrice);
+            showSnackbar("Không thể tính giá phòng!");
             resetBookingState();
             return;
         }
@@ -434,12 +445,14 @@ public class BookingActivity extends AppCompatActivity {
         if (!voucherCode.isEmpty()) {
             getVoucherDiscount(voucherCode, discount -> {
                 double finalTotalPrice = baseTotalPrice * (1 - discount / 100);
+                Log.d(TAG, "Voucher applied: code=" + voucherCode + ", discount=" + discount + "%, finalPrice=" + finalTotalPrice);
                 if (discount == 0 && !voucherCode.isEmpty()) {
-                    showToast("Mã giảm giá không hợp lệ!");
+                    showSnackbar("Mã giảm giá không hợp lệ!");
                 }
                 saveBooking(maKH, customerName, customerPhone, customerCCCD, customerEmail, voucherCode, tgDat, tgCheckIn, tgCheckOut, finalTotalPrice, specialRequest);
             });
         } else {
+            Log.d(TAG, "No voucher applied, finalPrice=" + baseTotalPrice);
             saveBooking(maKH, customerName, customerPhone, customerCCCD, customerEmail, voucherCode, tgDat, tgCheckIn, tgCheckOut, baseTotalPrice, specialRequest);
         }
     }
@@ -464,7 +477,7 @@ public class BookingActivity extends AppCompatActivity {
                     bookingData.put("TGCheckin", tgCheckIn);
                     bookingData.put("TGCheckout", tgCheckOut);
                     bookingData.put("TrangThaiTT", "Chưa thanh toán");
-                    bookingData.put("TrangThaiDD", "Đang xử lý");
+                    bookingData.put("TrangThaiDD", "Đã xác nhận"); // Changed to "Đã xác nhận"
                     bookingData.put("SoKhach", guestCount);
                     bookingData.put("YeuCauDacBiet", specialRequest.isEmpty() ? null : specialRequest);
 
@@ -484,7 +497,7 @@ public class BookingActivity extends AppCompatActivity {
                                 invoiceData.put("TGCheckin", tgCheckIn);
                                 invoiceData.put("TGCheckout", tgCheckOut);
                                 invoiceData.put("TongGia", totalPrice);
-                                invoiceData.put("TrangThai", "Đang xử lý");
+                                invoiceData.put("TrangThai", "Đã xác nhận"); // Changed to "Đã xác nhận"
                                 invoiceData.put("MaGiamGia", voucherCode.isEmpty() ? null : voucherCode);
                                 invoiceData.put("SoKhach", guestCount);
                                 invoiceData.put("YeuCauDacBiet", specialRequest.isEmpty() ? null : specialRequest);
@@ -508,48 +521,70 @@ public class BookingActivity extends AppCompatActivity {
                                                             intent.putExtra("voucherCode", voucherCode);
                                                             intent.putExtra("guestCount", guestCount);
                                                             intent.putExtra("specialRequest", specialRequest);
-                                                            intent.putExtra("status", "Đang xử lý");
+                                                            intent.putExtra("status", "Đã xác nhận"); // Changed to "Đã xác nhận"
+                                                            Log.d(TAG, "Starting InvoiceActivity with invoiceId: " + invoiceId);
                                                             startActivity(intent);
 
                                                             sharedPreferences.edit()
                                                                     .putString("USER_NAME", customerName)
                                                                     .putString("USER_PHONE", customerPhone)
                                                                     .putString("USER_EMAIL", customerEmail)
+                                                                    .putString("USER_CCCD", customerCCCD)
                                                                     .apply();
 
-                                                            showToast("Đặt phòng thành công!");
+                                                            showSnackbar("Đặt phòng thành công!");
                                                             finish();
                                                         }
                                                     })
                                                     .addOnFailureListener(e -> {
-                                                        if (!isFinishing()) showToast("Lỗi cập nhật trạng thái phòng: " + e.getMessage());
-                                                    })
-                                                    .addOnCompleteListener(task -> resetBookingState());
+                                                        if (!isFinishing()) {
+                                                            Log.e(TAG, "Error updating room status: " + e.getMessage());
+                                                            showSnackbar("Lỗi cập nhật trạng thái phòng: " + e.getMessage());
+                                                        }
+                                                        resetBookingState();
+                                                    });
                                         })
                                         .addOnFailureListener(e -> {
-                                            if (!isFinishing()) showToast("Lỗi lưu hóa đơn: " + e.getMessage());
+                                            if (!isFinishing()) {
+                                                Log.e(TAG, "Error saving invoice: " + e.getMessage());
+                                                showSnackbar("Lỗi lưu hóa đơn: " + e.getMessage());
+                                            }
                                             resetBookingState();
                                         });
                             })
                             .addOnFailureListener(e -> {
-                                if (!isFinishing()) showToast("Lỗi lưu đơn đặt phòng: " + e.getMessage());
+                                if (!isFinishing()) {
+                                    Log.e(TAG, "Error saving booking: " + e.getMessage());
+                                    showSnackbar("Lỗi lưu đơn đặt phòng: " + e.getMessage());
+                                }
                                 resetBookingState();
                             });
                 })
                 .addOnFailureListener(e -> {
-                    if (!isFinishing()) showToast("Lỗi lưu thông tin khách hàng: " + e.getMessage());
+                    if (!isFinishing()) {
+                        Log.e(TAG, "Error saving customer data: " + e.getMessage());
+                        showSnackbar("Lỗi lưu thông tin khách hàng: " + e.getMessage());
+                    }
                     resetBookingState();
                 });
     }
 
     private void getVoucherDiscount(String voucherCode, OnDiscountListener listener) {
         if (voucherCode.isEmpty()) {
+            Log.d(TAG, "No voucher code provided");
             listener.onResult(0);
             return;
         }
         firestore.collection("vouchers").document(voucherCode).get()
-                .addOnSuccessListener(document -> listener.onResult(document.exists() ? document.getDouble("ChietKhau") != null ? document.getDouble("ChietKhau") : 0 : 0))
-                .addOnFailureListener(e -> listener.onResult(0));
+                .addOnSuccessListener(document -> {
+                    double discount = document.exists() && document.getDouble("ChietKhau") != null ? document.getDouble("ChietKhau") : 0;
+                    Log.d(TAG, "Voucher discount fetched: code=" + voucherCode + ", discount=" + discount);
+                    listener.onResult(discount);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching voucher: " + e.getMessage());
+                    listener.onResult(0);
+                });
     }
 
     private interface OnDiscountListener {
@@ -557,81 +592,106 @@ public class BookingActivity extends AppCompatActivity {
     }
 
     private double calculateTotalPrice() {
+        Log.d(TAG, "calculateTotalPrice - roomPrice: " + roomPrice + ", checkInDate: " + checkInDate + ", checkOutDate: " + checkOutDate + ", guestCount: " + guestCount);
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            Date dateCheckIn = dateFormat.parse(checkInDate);
-            Date dateCheckOut = dateFormat.parse(checkOutDate);
-            long diffInDays = (dateCheckOut.getTime() - dateCheckIn.getTime()) / (1000 * 60 * 60 * 24);
-            if (diffInDays <= 0) {
-                showToast("Ngày không hợp lệ!");
+            if (roomPrice <= 0 || guestCount < 2 || checkInDate == null || checkOutDate == null) {
+                Log.e(TAG, "Invalid input: roomPrice=" + roomPrice + ", guestCount=" + guestCount + ", checkInDate=" + checkInDate + ", checkOutDate=" + checkOutDate);
+                showSnackbar("Dữ liệu không hợp lệ để tính giá!");
                 return 0;
             }
-            double basePrice = roomPrice * diffInDays * guestCount;
-            if (diffInDays >= 5 && diffInDays <= 10) basePrice *= 0.9;
 
-            // Calculate additional fees for special requests
-            double additionalFee = 0;
-            String specialRequest = editSpecialRequest.getText().toString().trim();
-            if (!specialRequest.isEmpty()) {
-                if (specialRequest.contains("check-in")) {
-                    String[] parts = specialRequest.split("check-in lúc ");
-                    if (parts.length > 1) {
-                        String time = parts[1].split(";")[0].trim();
-                        int hoursEarly = 14 - Integer.parseInt(time.split(":")[0]);
-                        if (hoursEarly > 0) additionalFee += hoursEarly * EARLY_CHECKIN_FEE;
-                    }
-                }
-                if (specialRequest.contains("check-out")) {
-                    String[] parts = specialRequest.split("check-out lúc ");
-                    if (parts.length > 1) {
-                        String time = parts[1].trim();
-                        int hoursLate = Integer.parseInt(time.split(":")[0]) - 12;
-                        if (hoursLate > 0) additionalFee += hoursLate * LATE_CHECKOUT_FEE;
-                    }
-                }
+            SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Date dateCheckIn = dbFormat.parse(checkInDate);
+            Date dateCheckOut = dbFormat.parse(checkOutDate);
+
+            if (dateCheckIn == null || dateCheckOut == null) {
+                Log.e(TAG, "Failed to parse dates: checkInDate=" + checkInDate + ", checkOutDate=" + checkOutDate);
+                showSnackbar("Lỗi định dạng ngày!");
+                return 0;
             }
-            return basePrice + additionalFee;
+
+            long diffInDays = (dateCheckOut.getTime() - dateCheckIn.getTime()) / (1000 * 60 * 60 * 24);
+            if (diffInDays <= 0) {
+                Log.e(TAG, "Invalid date range: diffInDays=" + diffInDays);
+                showSnackbar("Ngày không hợp lệ!");
+                return 0;
+            }
+
+            double basePrice = roomPrice * diffInDays * guestCount;
+            if (diffInDays >= 5 && diffInDays <= 10) {
+                basePrice *= 0.9;
+                Log.d(TAG, "Applied 10% discount for " + diffInDays + " days");
+            }
+
+            double totalPrice = basePrice;
+            Log.d(TAG, "Total price calculated: basePrice=" + basePrice + ", totalPrice=" + totalPrice);
+            return totalPrice;
         } catch (Exception e) {
-            showToast("Lỗi tính giá!");
+            Log.e(TAG, "Exception in calculateTotalPrice: " + e.getMessage());
+            showSnackbar("Lỗi tính giá!");
             return 0;
         }
     }
 
     private void updateTotalPrice() {
+        if (textTotalPrice == null || textTotalDays == null) {
+            Log.e(TAG, "Views are null: textTotalPrice=" + textTotalPrice + ", textTotalDays=" + textTotalDays);
+            return;
+        }
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            Date dateCheckIn = dateFormat.parse(checkInDate);
-            Date dateCheckOut = dateFormat.parse(checkOutDate);
-            long diffInDays = (dateCheckOut.getTime() - dateCheckIn.getTime()) / (1000 * 60 * 60 * 24);
-            if (diffInDays <= 0) {
+            SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Date dateCheckIn = dbFormat.parse(checkInDate);
+            Date dateCheckOut = dbFormat.parse(checkOutDate);
+
+            if (dateCheckIn == null || dateCheckOut == null) {
+                Log.e(TAG, "Invalid dates in updateTotalPrice: checkInDate=" + checkInDate + ", checkOutDate=" + checkOutDate);
                 textTotalPrice.setText("0 VNĐ");
                 textTotalDays.setText("0 ngày");
+                showSnackbar("Lỗi ngày tháng!");
                 return;
             }
+
+            long diffInDays = (dateCheckOut.getTime() - dateCheckIn.getTime()) / (1000 * 60 * 60 * 24);
+            if (diffInDays <= 0) {
+                Log.e(TAG, "Invalid date range in updateTotalPrice: diffInDays=" + diffInDays);
+                textTotalPrice.setText("0 VNĐ");
+                textTotalDays.setText("0 ngày");
+                showSnackbar("Lỗi hiển thị giá!");
+                return;
+            }
+
             double totalPrice = calculateTotalPrice();
-            textTotalPrice.setText(NumberFormat.getCurrencyInstance(new Locale("vi", "VN")).format(totalPrice));
-            textTotalDays.setText(diffInDays + " ngày, " + guestCount + " khách");
+            if (totalPrice <= 0) {
+                Log.e(TAG, "Total price is zero or negative: " + totalPrice);
+                textTotalPrice.setText("0 VNĐ");
+                textTotalDays.setText(String.format(Locale.getDefault(), "%d ngày, %d khách", diffInDays, guestCount));
+                showSnackbar("Không thể tính giá!");
+                return;
+            }
+
+            NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+            currencyFormat.setMinimumFractionDigits(0);
+            textTotalPrice.setText(currencyFormat.format(totalPrice));
+            textTotalDays.setText(String.format(Locale.getDefault(), "%d ngày, %d khách", diffInDays, guestCount));
+            Log.d(TAG, "Price updated: totalPrice=" + totalPrice + ", displayText=" + currencyFormat.format(totalPrice) + ", days=" + diffInDays + ", guests=" + guestCount);
         } catch (Exception e) {
+            Log.e(TAG, "Exception in updateTotalPrice: " + e.getMessage());
             textTotalPrice.setText("0 VNĐ");
             textTotalDays.setText("0 ngày");
-            showToast("Lỗi hiển thị giá!");
+            showSnackbar("Lỗi hiển thị giá!");
         }
     }
 
     private boolean isValidPhone(String phone) {
-        return phone.length() == 10 && phone.matches("\\d+");
+        return phone.length() == 10 && phone.matches("0\\d{9}");
     }
 
     private boolean isValidEmail(String email) {
-        return email.isEmpty() || android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+        return email.isEmpty() || email.matches(".+@gmail\\.com$");
     }
 
     private boolean isValidCCCD(String cccd) {
-        return cccd.length() == 12 && cccd.matches("\\d+");
-    }
-
-    private void showToast(String message) {
-        if (!isFinishing()) Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        return cccd.matches("^\\d{12}$");
     }
 
     private void resetBookingState() {

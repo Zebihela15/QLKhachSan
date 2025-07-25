@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -13,7 +18,7 @@
         android:theme="@style/Theme.AppQLKhachSan"
         tools:targetApi="31">
 
-        <!-- Activity chính ban đầu (AdminActivity làm màn hình chính) -->
+        <!-- Main Activity (Launcher) -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -22,35 +27,39 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    <activity android:name=".NotificationsActivity"/>
-        <activity android:name=".RegisterActivity" />
-        <activity android:name=".migration.DataMigrationActivity" />
-        <activity android:name=".CustomerBookingActivity" />
-        <activity android:name=".MainActivity"></activity>
-        <activity android:name=".RoomActivity" />
-        <activity android:name=".RestaurantActivity" />
-        <activity android:name=".BookingActivity" />
-        <activity android:name=".admin.AdminDashboardActivity" />
-        <activity android:name=".admin.AdminBookingListActivity" />
-        <activity android:name=".admin.ClearDataActivity" />
-        <activity android:name=".UserInfoActivity"/>
-        <activity android:name=".Edit_Info_Activity"/>
 
-        <activity android:name=".BookingHistoryActivity"/>
-        <activity android:name=".InvoiceActivity"></activity>
-        <!-- Các activity trong thư mục admin -->
+        <!-- Other Activities -->
+        <activity android:name=".NotificationsActivity" android:exported="false" />
+        <activity android:name=".RegisterActivity" android:exported="false" />
+        <activity android:name=".BookingManagementActivity" android:exported="false" />
+        <activity android:name=".migration.DataMigrationActivity" android:exported="false" />
+        <activity android:name=".CustomerBookingActivity" android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".admin.StatisticsActivity" android:exported="false" />
+        <activity android:name=".RoomActivity" android:exported="false" />
+        <activity android:name=".RestaurantActivity" android:exported="false" />
+        <activity android:name=".BookingActivity" android:exported="false" />
+        <activity android:name=".admin.AdminDashboardActivity" android:exported="false" />
+        <activity android:name=".admin.AdminBookingListActivity" android:exported="false" />
+        <activity android:name=".admin.ClearDataActivity" android:exported="false" />
+        <activity android:name=".UserInfoActivity" android:exported="false" />
+        <activity android:name=".Edit_Info_Activity" android:exported="false" />
+        <activity android:name=".ManagementActivity" android:exported="false" />
+        <activity android:name=".admin.RoomManagementActivity" android:exported="false" />
+        <activity android:name=".BookingHistoryActivity" android:exported="false" />
+        <activity android:name=".InvoiceActivity" android:exported="false" />
 
-        <!--
-        <activity android:name=".admin.DiscountManagementActivity" />
-        <activity android:name=".admin.RoomStatusActivity" />
-
-        <activity android:name=".admin.InvoiceManagementActivity" />
-        -->
+        <!-- FileProvider for sharing PDFs -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
 
     </application>
-
-    <!-- Quyền truy cập ảnh (nếu cần cho upload ảnh trong RoomManagementActivity) -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
 </manifest>

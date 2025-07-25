@@ -55,7 +55,7 @@ public class UserInfoActivity extends AppCompatActivity {
             bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
                 if (!isActive) return false;
                 int itemId = item.getItemId();
-                if (itemId == R.id.nav_profile) {
+                if (itemId == R.id.nav_statistics) {
                     return true; // Đã ở đây
                 } else if (itemId == R.id.nav_home) {
                     startActivity(new Intent(UserInfoActivity.this, MainActivity.class));
@@ -65,7 +65,7 @@ public class UserInfoActivity extends AppCompatActivity {
                 return false;
             });
             // Đặt item "nav_profile" là item được chọn mặc định
-            bottomNavigationView.setSelectedItemId(R.id.nav_profile);
+            bottomNavigationView.setSelectedItemId(R.id.nav_statistics);
         }
 
         // Sự kiện xem thông tin cá nhân

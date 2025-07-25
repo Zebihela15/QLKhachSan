@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8F9FA">
@@ -15,7 +14,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/navigation">
 
-        <!-- Header Bar with Gradient -->
+        <!-- Header Bar -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/headerBar"
             android:layout_width="match_parent"
@@ -42,7 +41,7 @@
                 android:id="@+id/welcomeText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Chào mừng đến với dịch vụ đặt phòng"
+                android:text="Hỗ trợ đặt phòng nhanh cho khách hàng"
                 android:textSize="16sp"
                 android:textColor="#E8F4FD"
                 android:alpha="0.9"
@@ -66,14 +65,14 @@
                     android:layout_height="24dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_notifications"
-                    android:contentDescription="Thông báo"
+                    android:contentDescription="Thông báo đặt phòng"
                     app:tint="#2196F3" />
             </androidx.cardview.widget.CardView>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Search Bar with enhanced styling -->
+        <!-- Date Picker -->
         <androidx.cardview.widget.CardView
-            android:id="@+id/searchBarCard"
+            android:id="@+id/datePickerCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:cardCornerRadius="28dp"
@@ -85,23 +84,38 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <EditText
-                android:id="@+id/searchBar"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:hint="🔍 Tìm kiếm phòng hoặc nhà hàng..."
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:paddingHorizontal="20dp"
-                android:background="@android:color/transparent"
-                android:inputType="text"
-                android:imeOptions="actionSearch"
-                android:textSize="16sp"
-                android:textColorHint="#B0BEC5"
-                android:contentDescription="Tìm kiếm phòng hoặc nhà hàng" />
+                android:paddingVertical="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ngày kiểm tra:"
+                    android:textSize="16sp"
+                    android:textColor="#546E7A" />
+
+                <EditText
+                    android:id="@+id/datePicker"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Chọn ngày (YYYY-MM-DD)"
+                    android:textSize="16sp"
+                    android:inputType="date"
+                    android:focusable="false"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Chọn ngày kiểm tra phòng trống" />
+            </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Sort Spinner with modern styling -->
+        <!-- Filter Section -->
         <androidx.cardview.widget.CardView
-            android:id="@+id/sortCard"
+            android:id="@+id/filterCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:cardCornerRadius="20dp"
@@ -109,7 +123,7 @@
             app:cardBackgroundColor="#FFFFFF"
             android:layout_marginHorizontal="24dp"
             android:layout_marginTop="20dp"
-            app:layout_constraintTop_toBottomOf="@id/searchBarCard"
+            app:layout_constraintTop_toBottomOf="@id/datePickerCard"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
@@ -117,53 +131,44 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
                 android:paddingHorizontal="16dp"
-                android:paddingVertical="4dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" Sắp xếp:"
-                    android:textSize="15sp"
-                    android:textColor="#546E7A"
-                    android:fontFamily="sans-serif-medium" />
+                android:paddingVertical="8dp">
 
                 <Spinner
-                    android:id="@+id/spinnerSort"
+                    android:id="@+id/spinnerRoomType"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Lọc theo loại phòng" />
+
+                <Spinner
+                    android:id="@+id/spinnerStatus"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
                     android:background="@android:color/transparent"
                     android:layout_marginStart="12dp"
-                    android:contentDescription="Sắp xếp danh sách phòng" />
+                    android:contentDescription="Lọc theo trạng thái phòng" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Room List Title with icon -->
-        <LinearLayout
-            android:id="@+id/titleLayout"
+        <!-- Room List Title -->
+        <TextView
+            android:id="@+id/roomListTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            app:layout_constraintTop_toBottomOf="@id/sortCard"
+            android:text="Danh sách Phòng"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#1A237E"
+            android:fontFamily="sans-serif-medium"
+            app:layout_constraintTop_toBottomOf="@id/filterCard"
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginTop="24dp"
-            android:layout_marginStart="24dp">
+            android:layout_marginStart="24dp" />
 
-            <TextView
-                android:id="@+id/roomListTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" Danh sách Phòng"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#1A237E"
-                android:fontFamily="sans-serif-medium" />
-        </LinearLayout>
-
-        <!-- Room RecyclerView with improved spacing -->
+        <!-- Room RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/roomRecyclerView"
             android:layout_width="0dp"
@@ -172,16 +177,28 @@
             android:paddingHorizontal="16dp"
             android:paddingTop="8dp"
             android:paddingBottom="16dp"
-            app:layout_constraintTop_toBottomOf="@id/titleLayout"
+            app:layout_constraintTop_toBottomOf="@id/roomListTitle"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp"
-            tools:listitem="@layout/item_room"
-            tools:itemCount="6" />
+            android:layout_marginTop="16dp" />
+
+        <!-- Floating Action Button for New Booking -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddBooking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_add"
+            app:fabSize="normal"
+            app:backgroundTint="#2196F3"
+            app:tint="#FFFFFF"
+            android:contentDescription="Thêm đặt phòng mới"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_margin="16dp" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Bottom Navigation with elevation -->
+    <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/navigation"
         android:layout_width="0dp"

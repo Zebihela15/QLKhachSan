@@ -109,12 +109,25 @@
         android:layout_height="wrap_content"
         android:text="Quản lý đơn đặt phòng"
         android:layout_marginTop="16dp"/>
-
+    <Button
+        android:id="@+id/btnManageRooms"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Quản lý phòng"
+        android:layout_marginTop="8dp"/>
+    <Button
+        android:id="@+id/btnStatistics"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Xem thống kê"
+        android:layout_marginTop="8dp"/>
     <Button
         android:id="@+id/btnClearData"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Xóa dữ liệu bookings và invoices"
         android:layout_marginTop="8dp"/>
+
+
 
 </LinearLayout>

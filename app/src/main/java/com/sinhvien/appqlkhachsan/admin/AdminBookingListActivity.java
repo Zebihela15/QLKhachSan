@@ -360,77 +360,54 @@ public class AdminBookingListActivity extends AppCompatActivity {
             return;
         }
 
-        try {
-            Date currentTime = new Date();
-            Date checkInDate = dateTimeFormat.parse(booking.tgCheckin);
-            Date checkOutDate = dateTimeFormat.parse(booking.tgCheckout);
+        db.collection("rooms").document(String.valueOf(maPhong)).get()
+                .addOnSuccessListener(roomDoc -> {
+                    if (!isActive) return;
+                    String roomStatus = roomDoc.getString("TrangThai");
+                    if (!"Trống".equals(roomStatus)) {
+                        Toast.makeText(this, "Không thể check-in: Phòng không trống!", Toast.LENGTH_LONG).show();
+                        return;
+                    }
 
-            if (currentTime.before(checkInDate)) {
-                new AlertDialog.Builder(this)
-                        .setMessage("Không thể check-in trước ngày nhận phòng (" + displayDateTimeFormat.format(checkInDate) + ")!")
-                        .setPositiveButton("OK", null)
-                        .show();
-                return;
-            }
+                    String checkInTime = dateTimeFormat.format(new Date());
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("TrangThaiDD", "Đang ở");
+                    updates.put("CheckInTime", checkInTime);
 
-            if (currentTime.after(checkOutDate)) {
-                Toast.makeText(this, "Không thể check-in: Đã quá hạn trả phòng!", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            db.collection("rooms").document(String.valueOf(maPhong)).get()
-                    .addOnSuccessListener(roomDoc -> {
-                        if (!isActive) return;
-                        String roomStatus = roomDoc.getString("TrangThai");
-                        if (!"Trống".equals(roomStatus)) {
-                            Toast.makeText(this, "Không thể check-in: Phòng không trống!", Toast.LENGTH_LONG).show();
-                            return;
-                        }
-
-                        String checkInTime = dateTimeFormat.format(currentTime);
-                        String pass = generateRandomPass();
-                        Map<String, Object> updates = new HashMap<>();
-                        updates.put("TrangThaiDD", "Đã nhận phòng");
-                        updates.put("CheckInTime", checkInTime);
-                        updates.put("RoomPass", pass);
-
-                        db.collection("bookings").document(maDon).update(updates)
-                                .addOnSuccessListener(aVoid -> {
-                                    if (!isActive) return;
-                                    db.collection("invoices").whereEqualTo("MaDon", maDon).get()
-                                            .addOnSuccessListener(querySnapshot -> {
-                                                if (!querySnapshot.isEmpty()) {
-                                                    String invoiceId = querySnapshot.getDocuments().get(0).getId();
-                                                    db.collection("invoices").document(invoiceId)
-                                                            .update("TrangThai", "Đang ở")
-                                                            .addOnSuccessListener(aVoid1 -> {
-                                                                db.collection("rooms").document(String.valueOf(maPhong))
-                                                                        .update("TrangThai", "Đang sử dụng")
-                                                                        .addOnSuccessListener(aVoid2 -> {
-                                                                            if (isActive) {
-                                                                                sendNotification(maKH, maDon, "Bạn đã nhận phòng " + roomName + ". Mã pass: " + pass);
-                                                                                new AlertDialog.Builder(this)
-                                                                                        .setTitle("Check-in thành công")
-                                                                                        .setMessage("Đã check-in đơn " + maDon + ". Mã pass: " + pass)
-                                                                                        .setPositiveButton("OK", null)
-                                                                                        .show();
-                                                                                loadBookingsForAllFragments();
-                                                                            }
-                                                                        });
-                                                            });
-                                                }
-                                            });
-                                })
-                                .addOnFailureListener(e -> {
-                                    if (isActive) Toast.makeText(this, "Lỗi check-in!", Toast.LENGTH_LONG).show();
-                                });
-                    })
-                    .addOnFailureListener(e -> {
-                        if (isActive) Toast.makeText(this, "Lỗi kiểm tra trạng thái phòng!", Toast.LENGTH_LONG).show();
-                    });
-        } catch (ParseException e) {
-            Toast.makeText(this, "Lỗi xử lý thời gian!", Toast.LENGTH_LONG).show();
-        }
+                    db.collection("bookings").document(maDon).update(updates)
+                            .addOnSuccessListener(aVoid -> {
+                                if (!isActive) return;
+                                db.collection("invoices").whereEqualTo("MaDon", maDon).get()
+                                        .addOnSuccessListener(querySnapshot -> {
+                                            if (!querySnapshot.isEmpty()) {
+                                                String invoiceId = querySnapshot.getDocuments().get(0).getId();
+                                                db.collection("invoices").document(invoiceId)
+                                                        .update("TrangThai", "Đang ở")
+                                                        .addOnSuccessListener(aVoid1 -> {
+                                                            db.collection("rooms").document(String.valueOf(maPhong))
+                                                                    .update("TrangThai", "Đang sử dụng")
+                                                                    .addOnSuccessListener(aVoid2 -> {
+                                                                        if (isActive) {
+                                                                            sendNotification(maKH, maDon, "Bạn đã nhận phòng " + roomName);
+                                                                            new AlertDialog.Builder(this)
+                                                                                    .setTitle("Check-in thành công")
+                                                                                    .setMessage("Đã check-in đơn " + maDon)
+                                                                                    .setPositiveButton("OK", null)
+                                                                                    .show();
+                                                                            loadBookingsForAllFragments();
+                                                                        }
+                                                                    });
+                                                        });
+                                            }
+                                        });
+                            })
+                            .addOnFailureListener(e -> {
+                                if (isActive) Toast.makeText(this, "Lỗi check-in!", Toast.LENGTH_LONG).show();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    if (isActive) Toast.makeText(this, "Lỗi kiểm tra trạng thái phòng!", Toast.LENGTH_LONG).show();
+                });
     }
 
     private void handleCheckOut(String maDon, int maPhong, boolean isEarly) {

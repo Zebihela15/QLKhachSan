@@ -1,0 +1,83 @@
+\documentclass[a4paper,12pt]{article}
+
+% Including necessary packages
+\usepackage[utf8]{vietnam}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{fontspec}
+\usepackage{datetime}
+\usepackage{fancyhdr}
+
+% Setting geometry for the page
+\geometry{a4paper, left=2cm, right=2cm, top=2cm, bottom=2cm}
+
+% Defining colors
+\definecolor{headerblue}{RGB}{0, 51, 102}
+\definecolor{lightgray}{RGB}{240, 240, 240}
+
+% Setting font to Noto Serif for Vietnamese support
+\setmainfont{Noto Serif}
+
+% Setting up header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textbf{Khách sạn XYZ}}
+\fancyhead[R]{\textbf{Hóa đơn đặt phòng}}
+\fancyfoot[C]{\thepage}
+
+% Redefining date format to Vietnamese
+\newdateformat{vietdate}{\THEDAY/\THEMONTH/\THEYEAR}
+
+\begin{document}
+
+% Title
+\begin{center}
+    \textbf{\LARGE HÓA ĐƠN ĐẶT PHÒNG} \\
+    \vspace{0.5cm}
+    \textbf{Mã đơn: \texttt{INVOICEID}} \\
+    \vspace{0.2cm}
+    Ngày xuất: \vietdate\today
+\end{center}
+
+% Booking Information
+\section*{Thông tin khách hàng}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{5cm}|p{10cm}|}
+    \hline
+    \rowcolor{lightgray}
+    \textbf{Thông tin} & \textbf{Chi tiết} \\ \hline
+    Tên khách hàng & CUSTOMERNAME \\ \hline
+    Số điện thoại & PHONE \\ \hline
+    CCCD & CMND \\ \hline
+    Email & EMAIL \\ \hline
+\end{tabular}
+
+\section*{Thông tin đặt phòng}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{5cm}|p{10cm}|}
+    \hline
+    \rowcolor{lightgray}
+    \textbf{Thông tin} & \textbf{Chi tiết} \\ \hline
+    Mã đặt phòng & BOOKINGID \\ \hline
+    Phòng & ROOMNAME \\ \hline
+    Loại phòng & ROOMTYPE \\ \hline
+    Ngày nhận phòng & CHECKIN \\ \hline
+    Ngày trả phòng & CHECKOUT \\ \hline
+    Số đêm & DURATION \\ \hline
+    Số khách & GUESTCOUNT \\ \hline
+    Yêu cầu đặc biệt & SPECIALREQUEST \\ \hline
+    Mã giảm giá & VOUCHERCODE \\ \hline
+    Tổng giá & TOTALPRICE \\ \hline
+    Trạng thái & STATUS \\ \hline
+    Lý do hủy & REASONCANCEL \\ \hline
+\end{tabular}
+
+% Footer
+\vspace{1cm}
+\begin{center}
+    \textit{Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!} \\
+    \textit{Khách sạn XYZ - Địa chỉ: 123 Đường ABC, TP. Hồ Chí Minh}
+\end{center}
+
+\end{document}

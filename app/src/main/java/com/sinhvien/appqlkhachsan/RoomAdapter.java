@@ -132,14 +132,14 @@ public class RoomAdapter extends ListAdapter<RoomModel, RoomAdapter.RoomViewHold
 
         RoomViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgRoom = itemView.findViewById(R.id.imgRoom);
+
             txtRoomName = itemView.findViewById(R.id.txtRoomName);
             txtRoomType = itemView.findViewById(R.id.txtRoomType);
             txtRoomPrice = itemView.findViewById(R.id.txtRoomPrice);
             txtRoomStatus = itemView.findViewById(R.id.txtRoomStatus);
-            btnViewAvailability = itemView.findViewById(R.id.btnViewAvailability);
+
             btnBookRoom = itemView.findViewById(R.id.btnBookRoom);
-            btnViewInfo = itemView.findViewById(R.id.btnViewInfo);
+
         }
     }
 }

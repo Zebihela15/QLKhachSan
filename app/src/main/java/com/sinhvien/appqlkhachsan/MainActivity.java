@@ -1,14 +1,12 @@
 package com.sinhvien.appqlkhachsan;
 
-import static android.content.ContentValues.TAG;
-
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -19,49 +17,55 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.FirebaseAuth;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Query;
+import com.sinhvien.appqlkhachsan.admin.StatisticsActivity;
+import com.sinhvien.appqlkhachsan.admin.RoomManagementActivity;
+import com.sinhvien.appqlkhachsan.migration.InitializeFirestoreData;
 
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
     private RecyclerView roomRecyclerView;
-    private EditText searchBar;
-    private Spinner spinnerSort;
-    private ImageView notificationIcon;
     private RoomAdapter roomAdapter;
+    private EditText datePicker;
+    private Spinner spinnerRoomType, spinnerStatus;
+    private FloatingActionButton fabAddBooking;
+    private ImageView notificationIcon;
     private List<RoomModel> roomList;
     private List<RoomModel> originalRoomList;
-    private Map<Integer, Double> roomTypePrices = new HashMap<>();
-    private Map<Integer, Integer> roomTypeImages = new HashMap<>();
+    private Map<Integer, String> roomTypeNames;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private boolean isActive = true;
     private boolean isRoomsLoaded = false;
     private boolean isLoadingRooms = false;
-    private ListenerRegistration bookingsListener;
+    private ListenerRegistration invoicesListener;
+    private ListenerRegistration roomsListener;
+    private String selectedDate;
+    private Calendar currentCalendar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,52 +74,70 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             db = FirebaseFirestore.getInstance();
-            mAuth = FirebaseAuth.getInstance();
         } catch (Exception e) {
             Log.e(TAG, "Lỗi khởi tạo Firebase: " + e.getMessage());
             Toast.makeText(this, "Lỗi khởi tạo Firebase, vui lòng kiểm tra kết nối!", Toast.LENGTH_LONG).show();
             return;
         }
 
+        // Initialize data (run once, comment out after first run)
+        InitializeFirestoreData init = new InitializeFirestoreData();
+        init.initializeData();
+
         roomRecyclerView = findViewById(R.id.roomRecyclerView);
-        searchBar = findViewById(R.id.searchBar);
-        spinnerSort = findViewById(R.id.spinnerSort);
+        datePicker = findViewById(R.id.datePicker);
+        spinnerRoomType = findViewById(R.id.spinnerRoomType);
+        spinnerStatus = findViewById(R.id.spinnerStatus);
+        fabAddBooking = findViewById(R.id.fabAddBooking);
         notificationIcon = findViewById(R.id.notificationIcon);
 
-        String[] sortOptions = {"Sắp xếp: Mặc định", "Sắp xếp: Giá thấp đến cao", "Sắp xếp: Giá cao đến thấp"};
-        ArrayAdapter<String> sortAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, sortOptions);
-        sortAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerSort.setAdapter(sortAdapter);
-
+        roomRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         roomList = new ArrayList<>();
         originalRoomList = new ArrayList<>();
-        roomAdapter = new RoomAdapter(this, roomTypePrices, roomTypeImages, room -> {
-            Intent intent = new Intent(MainActivity.this, BookingActivity.class);
-            intent.putExtra("ROOM_ID", room.getMaPhong());
-            intent.putExtra("roomName", room.getName());
-            intent.putExtra("price", getRoomPrice(room.getMaLoaiPhong()));
-            intent.putExtra("imageResource", getRoomImageResource(room.getMaLoaiPhong()));
-            startActivity(intent);
-        }, room -> showAvailabilityDialog(room));
-
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        roomRecyclerView.setLayoutManager(layoutManager);
+        roomTypeNames = new HashMap<>();
+        roomAdapter = new RoomAdapter(roomList);
         roomRecyclerView.setAdapter(roomAdapter);
 
-        searchBar.setOnEditorActionListener((v, actionId, event) -> {
-            filterAndSortRooms();
-            return true;
-        });
+        String[] roomTypeOptions = {"Tất cả", "Standard", "VIP", "Deluxe"};
+        ArrayAdapter<String> roomTypeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, roomTypeOptions);
+        roomTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerRoomType.setAdapter(roomTypeAdapter);
 
-        spinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        String[] statusOptions = {"Tất cả", "Trống", "Đã đặt", "Đang sử dụng"};
+        ArrayAdapter<String> statusAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, statusOptions);
+        statusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerStatus.setAdapter(statusAdapter);
+
+        datePicker.setOnClickListener(v -> showDatePicker());
+        selectedDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().getTime());
+        datePicker.setText(selectedDate);
+        currentCalendar = Calendar.getInstance();
+
+        spinnerRoomType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                filterAndSortRooms();
+                Log.d(TAG, "Loại phòng được chọn: " + spinnerRoomType.getSelectedItem().toString());
+                filterRooms();
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        spinnerStatus.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.d(TAG, "Trạng thái được chọn: " + spinnerStatus.getSelectedItem().toString());
+                filterRooms();
             }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        fabAddBooking.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, BookingActivity.class);
+            startActivity(intent);
         });
 
         notificationIcon.setOnClickListener(v -> {
@@ -128,98 +150,42 @@ public class MainActivity extends AppCompatActivity {
             int itemId = item.getItemId();
             if (itemId == R.id.nav_home) {
                 return true;
-            } else if (itemId == R.id.nav_profile) {
-                startActivity(new Intent(MainActivity.this, UserInfoActivity.class));
+            } else if (itemId == R.id.nav_statistics) {
+                startActivity(new Intent(MainActivity.this, StatisticsActivity.class));
                 return true;
-            } else if (itemId == R.id.nav_booking) {
-                startActivity(new Intent(MainActivity.this, CustomerBookingActivity.class));
+            } else if (itemId == R.id.nav_management) {
+                startActivity(new Intent(MainActivity.this, BookingManagementActivity.class));
                 return true;
             }
             return false;
         });
 
-        initializeRoomImages();
-        loadRoomTypesFromFirestore();
-        loadRoomsFromFirestore();
-        setupBookingsListener();
+        initializeRoomNames();
+        setupRoomsListener();
+        setupInvoicesListener();
     }
 
-    private void setupBookingsListener() {
-        bookingsListener = db.collection("bookings")
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null) {
-                        Log.e(TAG, "Lỗi lắng nghe bookings: " + e.getMessage());
-                        return;
-                    }
-                    if (isActive && snapshots != null) {
-                        Log.d(TAG, "Phát hiện thay đổi trong bookings, làm mới danh sách phòng");
-                        loadRoomsFromFirestore();
-                    }
-                });
+    private void initializeRoomNames() {
+        roomTypeNames.put(1, "Standard");
+        roomTypeNames.put(2, "VIP");
+        roomTypeNames.put(3, "Deluxe");
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        isActive = false;
-        if (bookingsListener != null) {
-            bookingsListener.remove();
-        }
-    }
+    private void showDatePicker() {
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        isActive = true;
-        if (!isRoomsLoaded && !isLoadingRooms) {
-            loadRoomsFromFirestore();
-        }
-        setupBookingsListener();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        isActive = false;
-        if (bookingsListener != null) {
-            bookingsListener.remove();
-        }
-        executorService.shutdown();
-    }
-
-    private void initializeRoomImages() {
-        roomTypeImages.put(1, R.drawable.standard_room);
-        roomTypeImages.put(2, R.drawable.vip_rooms);
-        roomTypeImages.put(3, R.drawable.deluxe_room);
-    }
-
-    private int getRoomImageResource(int maLoaiPhong) {
-        return roomTypeImages.getOrDefault(maLoaiPhong, R.drawable.ic_launcher_background);
-    }
-
-    private void loadRoomTypesFromFirestore() {
-        if (!isActive) return;
-        executorService.execute(() -> {
-            db.collection("room_types").get().addOnCompleteListener(task -> {
-                if (task.isSuccessful() && isActive) {
-                    QuerySnapshot result = task.getResult();
-                    if (result != null) {
-                        for (DocumentSnapshot doc : result.getDocuments()) {
-                            int maLoaiPhong = doc.getLong("MaLoaiPhong").intValue();
-                            Double giaPhong = doc.getDouble("GiaPhong");
-                            if (giaPhong != null) {
-                                runOnUiThread(() -> roomTypePrices.put(maLoaiPhong, giaPhong));
-                            }
-                        }
-                        runOnUiThread(() -> roomAdapter.notifyDataSetChanged());
-                    }
-                }
-            });
-        });
-    }
-
-    private double getRoomPrice(int maLoaiPhong) {
-        return roomTypePrices.getOrDefault(maLoaiPhong, 500.0);
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                (view, selectedYear, selectedMonth, selectedDay) -> {
+                    selectedDate = String.format(Locale.getDefault(), "%d-%02d-%02d", selectedYear, selectedMonth + 1, selectedDay);
+                    datePicker.setText(selectedDate);
+                    currentCalendar.set(selectedYear, selectedMonth, selectedDay);
+                    loadRoomsFromFirestore();
+                }, year, month, day);
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
+        datePickerDialog.show();
     }
 
     private void showAvailabilityDialog(RoomModel room) {
@@ -232,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
         Button btnPrevMonth = dialogView.findViewById(R.id.btnPrevMonth);
         Button btnNextMonth = dialogView.findViewById(R.id.btnNextMonth);
         Button btnClose = dialogView.findViewById(R.id.btnClose);
+        AlertDialog dialog = builder.create();
 
         Calendar calendar = Calendar.getInstance();
         updateCalendarView(dialogView, room, calendar);
@@ -252,12 +219,10 @@ public class MainActivity extends AppCompatActivity {
 
         btnClose.setOnClickListener(v -> {
             if (isActive) {
-                AlertDialog dialog = builder.create();
                 dialog.dismiss();
             }
         });
 
-        AlertDialog dialog = builder.create();
         dialog.show();
     }
 
@@ -265,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
         if (!isActive) return;
         TextView roomName = dialogView.findViewById(R.id.dialogRoomName);
         SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM yyyy", new Locale("vi", "VN"));
-        runOnUiThread(() -> roomName.setText("🏨 Phòng " + room.getName() + " - Lịch trống (" + monthFormat.format(calendar.getTime()) + ")"));
+        runOnUiThread(() -> roomName.setText("🏨 " + room.getName() + " - Lịch trống (" + monthFormat.format(calendar.getTime()) + ")"));
 
         GridLayout gridLayout = dialogView.findViewById(R.id.gridLayout);
         if (gridLayout != null) {
@@ -275,26 +240,26 @@ public class MainActivity extends AppCompatActivity {
 
             executorService.execute(() -> {
                 if (!isActive) return;
-                Map<String, Boolean> bookedDates = new HashMap<>();
+                Map<String, String> bookedDates = new HashMap<>();
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                db.collection("bookings")
+                db.collection("invoices")
                         .whereEqualTo("MaPhong", room.getMaPhong())
-                        .whereIn("TrangThaiDD", List.of("Đang xử lý", "Đã xác nhận", "Đã nhận phòng", "Trả phòng sớm"))
-                        .limit(50)
+                        .whereIn("TrangThai", List.of("Đang xử lý", "Đã xác nhận", "Đã nhận phòng", "Trả phòng sớm"))
                         .get()
                         .addOnSuccessListener(querySnapshot -> {
                             if (!isActive) return;
                             for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                                 String tgCheckin = doc.getString("TGCheckin");
                                 String tgCheckout = doc.getString("TGCheckout");
+                                String trangThai = doc.getString("TrangThai");
                                 if (tgCheckin != null && tgCheckout != null) {
                                     try {
                                         Calendar checkinCal = Calendar.getInstance();
                                         Calendar checkoutCal = Calendar.getInstance();
-                                        checkinCal.setTime(dateFormat.parse(tgCheckin.split(" ")[0]));
-                                        checkoutCal.setTime(dateFormat.parse(tgCheckout.split(" ")[0]));
+                                        checkinCal.setTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(tgCheckin));
+                                        checkoutCal.setTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(tgCheckout));
                                         while (!checkinCal.after(checkoutCal)) {
-                                            bookedDates.put(dateFormat.format(checkinCal.getTime()), true);
+                                            bookedDates.put(dateFormat.format(checkinCal.getTime()), trangThai);
                                             checkinCal.add(Calendar.DAY_OF_MONTH, 1);
                                         }
                                     } catch (Exception e) {
@@ -304,131 +269,179 @@ public class MainActivity extends AppCompatActivity {
                             }
                             runOnUiThread(() -> updateGridLayout(gridLayout, firstDayOfMonth, daysInMonth, calendar, bookedDates));
                         })
-                        .addOnFailureListener(e -> Log.e(TAG, "Lỗi lấy bookings: " + e.getMessage()));
+                        .addOnFailureListener(e -> Log.e(TAG, "Lỗi lấy invoices: " + e.getMessage()));
             });
         }
     }
 
-    private void updateGridLayout(GridLayout gridLayout, int firstDayOfMonth, int daysInMonth, Calendar calendar, Map<String, Boolean> bookedDates) {
+    private void updateGridLayout(GridLayout gridLayout, int firstDayOfMonth, int daysInMonth, Calendar calendar, Map<String, String> bookedDates) {
         if (!isActive) return;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        for (int i = 1; i <= 35; i++) {
-            int dayIndex = i - 1;
-            int viewIndex = 7 + dayIndex;
-            if (viewIndex < gridLayout.getChildCount()) {
-                TextView dayView = (TextView) gridLayout.getChildAt(viewIndex);
+        int[] dayIds = {
+                R.id.day1, R.id.day2, R.id.day3, R.id.day4, R.id.day5, R.id.day6, R.id.day7,
+                R.id.day8, R.id.day9, R.id.day10, R.id.day11, R.id.day12, R.id.day13, R.id.day14,
+                R.id.day15, R.id.day16, R.id.day17, R.id.day18, R.id.day19, R.id.day20, R.id.day21,
+                R.id.day22, R.id.day23, R.id.day24, R.id.day25, R.id.day26, R.id.day27, R.id.day28,
+                R.id.day29, R.id.day30, R.id.day31, R.id.day32, R.id.day33, R.id.day34, R.id.day35
+        };
+
+        for (int i = 0; i < 35; i++) {
+            int dayIndex = i;
+            TextView dayView = gridLayout.findViewById(dayIds[i]);
+            if (dayView != null) {
                 if (dayIndex >= firstDayOfMonth && dayIndex - firstDayOfMonth + 1 <= daysInMonth) {
                     int day = dayIndex - firstDayOfMonth + 1;
                     dayView.setText(String.valueOf(day));
                     Calendar currentDay = (Calendar) calendar.clone();
                     currentDay.set(Calendar.DAY_OF_MONTH, day);
                     String dateStr = dateFormat.format(currentDay.getTime());
-                    boolean isBooked = bookedDates.containsKey(dateStr);
-                    dayView.setBackgroundColor(isBooked ? 0xFFF44336 : 0xFF4CAF50);
+                    String status = bookedDates.get(dateStr);
+                    if (status != null) {
+                        dayView.setBackgroundColor(status.equals("Đã nhận phòng") ? 0xFFFFEB3B : 0xFFF44336);
+                    } else {
+                        dayView.setBackgroundColor(0xFF4CAF50);
+                    }
+                    dayView.setTextColor(0xFFFFFFFF);
                 } else {
                     dayView.setText("");
                     dayView.setBackgroundColor(0xFFE0E0E0);
+                    dayView.setTextColor(0xFF000000);
                 }
             }
         }
     }
 
-    private void filterAndSortRooms() {
-        if (!isActive) return;
-        String searchQuery = searchBar.getText().toString().trim().toLowerCase();
-        List<RoomModel> filteredList = new ArrayList<>(originalRoomList);
-
-        if (!TextUtils.isEmpty(searchQuery)) {
-            filteredList.removeIf(room -> !room.getName().toLowerCase().contains(searchQuery));
+    private void setupInvoicesListener() {
+        if (invoicesListener != null) {
+            invoicesListener.remove();
         }
+        invoicesListener = db.collection("invoices")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.e(TAG, "Lỗi lắng nghe invoices: " + e.getMessage());
+                        Toast.makeText(this, "Lỗi lắng nghe invoices: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    if (isActive && snapshots != null) {
+                        Log.d(TAG, "Phát hiện thay đổi trong invoices, làm mới danh sách phòng");
+                        loadRoomsFromFirestore();
+                    }
+                });
+    }
 
-        String sortOption = spinnerSort.getSelectedItem().toString();
-        if (sortOption.equals("Sắp xếp: Giá thấp đến cao")) {
-            filteredList.sort(Comparator.comparingDouble(room -> getRoomPrice(room.getMaLoaiPhong())));
-        } else if (sortOption.equals("Sắp xếp: Giá cao đến thấp")) {
-            filteredList.sort((r1, r2) -> Double.compare(getRoomPrice(r2.getMaLoaiPhong()), getRoomPrice(r1.getMaLoaiPhong())));
+    private void setupRoomsListener() {
+        if (roomsListener != null) {
+            roomsListener.remove();
         }
+        roomsListener = db.collection("rooms")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Log.e(TAG, "Lỗi lắng nghe rooms: " + e.getMessage());
+                        Toast.makeText(this, "Lỗi lắng nghe rooms: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    if (isActive && snapshots != null) {
+                        Log.d(TAG, "Phát hiện thay đổi trong rooms, làm mới danh sách phòng");
+                        loadRoomsFromFirestore();
+                    }
+                });
+    }
 
-        roomAdapter.submitList(new ArrayList<>(filteredList));
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isActive = false;
+        if (invoicesListener != null) {
+            invoicesListener.remove();
+        }
+        if (roomsListener != null) {
+            roomsListener.remove();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isActive = true;
+        if (!isRoomsLoaded && !isLoadingRooms) {
+            loadRoomsFromFirestore();
+        }
+        setupInvoicesListener();
+        setupRoomsListener();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        isActive = false;
+        if (invoicesListener != null) {
+            invoicesListener.remove();
+        }
+        if (roomsListener != null) {
+            roomsListener.remove();
+        }
+        executorService.shutdown();
     }
 
     private void loadRoomsFromFirestore() {
-        if (!isActive || isRoomsLoaded || isLoadingRooms) {
-            Log.d(TAG, "Bỏ qua loadRoomsFromFirestore: isActive=" + isActive + ", isRoomsLoaded=" + isRoomsLoaded + ", isLoadingRooms=" + isLoadingRooms);
+        if (!isActive || isLoadingRooms) {
+            Log.d(TAG, "Bỏ qua loadRoomsFromFirestore: isActive=" + isActive + ", isLoadingRooms=" + isLoadingRooms);
             return;
         }
         isLoadingRooms = true;
         roomList.clear();
         originalRoomList.clear();
-        Set<Integer> addedRoomIds = new HashSet<>();
-        String currentUserId = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : null;
-        Log.d(TAG, "Current User ID: " + currentUserId);
 
-        if (currentUserId == null) {
-            Toast.makeText(this, "Không tìm thấy người dùng đăng nhập!", Toast.LENGTH_LONG).show();
-            isLoadingRooms = false;
-            return;
-        }
-
-        db.collection("rooms").get()
+        Log.d(TAG, "Bắt đầu tải danh sách phòng từ Firestore");
+        db.collection("rooms").orderBy("MaPhong", Query.Direction.ASCENDING).get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (!isActive) {
                         isLoadingRooms = false;
                         return;
                     }
-                    Log.d(TAG, "Tổng số phòng từ Firestore: " + querySnapshot.size());
+                    Log.d(TAG, "Tổng số tài liệu từ Firestore: " + querySnapshot.size());
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        Log.d(TAG, "Tài liệu: ID=" + doc.getId() + ", MaPhong=" + doc.getLong("MaPhong"));
+                    }
                     if (querySnapshot.isEmpty()) {
+                        Log.w(TAG, "Không có phòng nào trong Firestore!");
                         Toast.makeText(this, "Không có phòng nào trong Firestore!", Toast.LENGTH_LONG).show();
                         isRoomsLoaded = true;
                         isLoadingRooms = false;
-                        runOnUiThread(() -> roomAdapter.submitList(new ArrayList<>(roomList)));
+                        runOnUiThread(() -> roomAdapter.notifyDataSetChanged());
                         return;
                     }
 
-                    List<RoomModel> tempRoomList = new ArrayList<>();
+                    Map<Integer, RoomModel> roomMap = new HashMap<>();
                     for (DocumentSnapshot roomDoc : querySnapshot) {
-                        try {
-                            Integer maPhong = roomDoc.getLong("MaPhong") != null ? roomDoc.getLong("MaPhong").intValue() : 0;
-                            if (tempRoomList.stream().anyMatch(room -> room.getMaPhong() == maPhong)) {
-                                Log.d(TAG, "Bỏ qua phòng trùng lặp trong Firestore: MaPhong " + maPhong + ", TenPhong: " + roomDoc.getString("TenPhong"));
-                                continue;
-                            }
-                            String tenPhong = roomDoc.getString("TenPhong");
-                            Double dienTich = roomDoc.getDouble("DienTich") != null ? roomDoc.getDouble("DienTich") : 0.0;
-                            String trangThai = roomDoc.getString("TrangThai");
-                            String donViTinh = roomDoc.getString("DonViTinh") != null ? roomDoc.getString("DonViTinh") : "m²";
-                            Integer maLoaiPhong = roomDoc.getLong("MaLoaiPhong") != null ? roomDoc.getLong("MaLoaiPhong").intValue() : 1;
-                            String moTa = roomDoc.getString("MoTa") != null ? roomDoc.getString("MoTa") : "Không có mô tả";
-                            String diaChi = roomDoc.getString("DiaChi") != null ? roomDoc.getString("DiaChi") : "Không xác định";
-                            String ghiChu = roomDoc.getString("GhiChu") != null ? roomDoc.getString("GhiChu") : "";
-                            Integer hinhAnh = roomDoc.getLong("HinhAnh") != null ? roomDoc.getLong("HinhAnh").intValue() : getRoomImageResource(maLoaiPhong);
-                            List<Integer> tienIch = roomDoc.get("TienIch") != null ? (List<Integer>) roomDoc.get("TienIch") : new ArrayList<>();
-
-                            RoomModel room = new RoomModel(maPhong, tenPhong, dienTich, trangThai != null ? trangThai : "Trống",
-                                    donViTinh, maLoaiPhong, moTa, diaChi, ghiChu, hinhAnh, tienIch);
-                            tempRoomList.add(room);
-                            Log.d(TAG, "Đã thêm phòng tạm thời: " + tenPhong + ", MaPhong: " + maPhong + ", MaLoaiPhong: " + maLoaiPhong + ", Trạng thái: " + (trangThai != null ? trangThai : "Trống"));
-                        } catch (Exception e) {
-                            Log.e(TAG, "Lỗi khi parse phòng " + roomDoc.getId() + ": " + e.getMessage());
+                        RoomModel room = parseRoom(roomDoc);
+                        if (room != null) {
+                            Log.d(TAG, "Thêm phòng: MaPhong=" + room.getMaPhong() + ", TenPhong=" + room.getName());
+                            roomMap.put(room.getMaPhong(), room);
+                        } else {
+                            Log.w(TAG, "Phòng không hợp lệ, bỏ qua: " + roomDoc.getId());
                         }
                     }
 
+                    List<RoomModel> tempRoomList = new ArrayList<>(roomMap.values());
                     int totalRooms = tempRoomList.size();
-                    final int[] processedRooms = {0};
-
+                    Log.d(TAG, "Số phòng hợp lệ sau khi parse: " + totalRooms);
                     if (totalRooms == 0) {
+                        Toast.makeText(this, "Không có phòng hợp lệ nào để hiển thị!", Toast.LENGTH_LONG).show();
                         isRoomsLoaded = true;
                         isLoadingRooms = false;
-                        runOnUiThread(() -> roomAdapter.submitList(new ArrayList<>(roomList)));
-                        Log.d(TAG, "Không có phòng để xử lý, submitList với roomList rỗng");
+                        runOnUiThread(() -> roomAdapter.notifyDataSetChanged());
                         return;
                     }
 
+                    final int[] processedRooms = {0};
                     for (RoomModel room : tempRoomList) {
-                        db.collection("bookings")
+                        Log.d(TAG, "Kiểm tra trạng thái phòng: MaPhong=" + room.getMaPhong());
+                        db.collection("invoices")
                                 .whereEqualTo("MaPhong", room.getMaPhong())
-                                .whereEqualTo("MaKH", currentUserId)
-                                .whereIn("TrangThaiDD", List.of("Đang xử lý", "Đã xác nhận", "Đã nhận phòng", "Trả phòng sớm"))
+                                .whereIn("TrangThai", List.of("Đang xử lý", "Đã xác nhận", "Đã nhận phòng", "Trả phòng sớm"))
+                                .whereGreaterThanOrEqualTo("TGCheckin", selectedDate + " 00:00:00")
+                                .whereLessThanOrEqualTo("TGCheckout", selectedDate + " 23:59:59")
                                 .limit(1)
                                 .get()
                                 .addOnSuccessListener(bookingSnapshot -> {
@@ -436,25 +449,23 @@ public class MainActivity extends AppCompatActivity {
                                         isLoadingRooms = false;
                                         return;
                                     }
-                                    String displayTrangThai = bookingSnapshot.isEmpty() ? "Trống" : room.getStatus();
+                                    String displayTrangThai = bookingSnapshot.isEmpty() ? "Trống" :
+                                            bookingSnapshot.getDocuments().get(0).getString("TrangThai").equals("Đã nhận phòng") ? "Đang sử dụng" : "Đã đặt";
                                     room.setStatus(displayTrangThai);
+                                    Log.d(TAG, "Phòng: " + room.getMaPhong() + ", Trạng thái: " + displayTrangThai);
+
                                     synchronized (roomList) {
-                                        if (!addedRoomIds.contains(room.getMaPhong())) {
-                                            roomList.add(room);
-                                            originalRoomList.add(room);
-                                            addedRoomIds.add(room.getMaPhong());
-                                            Log.d(TAG, "Đã thêm phòng vào roomList: " + room.getName() + ", MaPhong: " + room.getMaPhong() + ", MaLoaiPhong: " + room.getMaLoaiPhong() + ", Trạng thái: " + displayTrangThai);
-                                        } else {
-                                            Log.d(TAG, "Bỏ qua phòng trùng lặp trong booking check: " + room.getName() + ", MaPhong: " + room.getMaPhong());
-                                        }
+                                        roomList.add(room);
+                                        originalRoomList.add(room);
                                     }
 
                                     processedRooms[0]++;
-                                    Log.d(TAG, "Đã xử lý phòng " + room.getName() + ", processedRooms: " + processedRooms[0] + "/" + totalRooms);
+                                    Log.d(TAG, "Đã xử lý: " + processedRooms[0] + "/" + totalRooms + " phòng");
                                     if (processedRooms[0] == totalRooms) {
                                         runOnUiThread(() -> {
-                                            Log.d(TAG, "Đã gọi submitList, kích thước roomList: " + roomList.size() + ", Phòng: " + roomListToString());
-                                            roomAdapter.submitList(new ArrayList<>(roomList));
+                                            roomAdapter.notifyDataSetChanged();
+                                            Toast.makeText(this, "Đã tải " + roomList.size() + " phòng", Toast.LENGTH_SHORT).show();
+                                            Log.d(TAG, "Danh sách phòng đã cập nhật: " + roomList.size() + " phòng");
                                             isRoomsLoaded = true;
                                             isLoadingRooms = false;
                                         });
@@ -465,22 +476,19 @@ public class MainActivity extends AppCompatActivity {
                                         isLoadingRooms = false;
                                         return;
                                     }
-                                    Log.e(TAG, "Lỗi kiểm tra booking cho phòng " + room.getMaPhong() + ": " + e.getMessage());
+                                    Log.e(TAG, "Lỗi kiểm tra trạng thái phòng " + room.getMaPhong() + ": " + e.getMessage());
                                     synchronized (roomList) {
-                                        if (!addedRoomIds.contains(room.getMaPhong())) {
-                                            roomList.add(room);
-                                            originalRoomList.add(room);
-                                            addedRoomIds.add(room.getMaPhong());
-                                            Log.d(TAG, "Đã thêm phòng mặc định vào roomList: " + room.getName() + ", MaPhong: " + room.getMaPhong() + ", MaLoaiPhong: " + room.getMaLoaiPhong() + ", Trạng thái: " + room.getStatus());
-                                        }
+                                        roomList.add(room);
+                                        originalRoomList.add(room);
                                     }
 
                                     processedRooms[0]++;
-                                    Log.d(TAG, "Đã xử lý phòng (mặc định) " + room.getName() + ", processedRooms: " + processedRooms[0] + "/" + totalRooms);
+                                    Log.d(TAG, "Đã xử lý (lỗi): " + processedRooms[0] + "/" + totalRooms + " phòng");
                                     if (processedRooms[0] == totalRooms) {
                                         runOnUiThread(() -> {
-                                            Log.d(TAG, "Đã gọi submitList (mặc định), kích thước roomList: " + roomList.size() + ", Phòng: " + roomListToString());
-                                            roomAdapter.submitList(new ArrayList<>(roomList));
+                                            roomAdapter.notifyDataSetChanged();
+                                            Toast.makeText(this, "Đã tải " + roomList.size() + " phòng", Toast.LENGTH_SHORT).show();
+                                            Log.d(TAG, "Danh sách phòng đã cập nhật (on failure): " + roomList.size() + " phòng");
                                             isRoomsLoaded = true;
                                             isLoadingRooms = false;
                                         });
@@ -494,15 +502,148 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Lỗi tải danh sách phòng: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         isRoomsLoaded = true;
                         isLoadingRooms = false;
+                        runOnUiThread(() -> roomAdapter.notifyDataSetChanged());
                     }
                 });
     }
 
-    private String roomListToString() {
-        StringBuilder sb = new StringBuilder();
-        for (RoomModel room : roomList) {
-            sb.append(room.getName()).append(" (MaPhong: ").append(room.getMaPhong()).append(", MaLoaiPhong: ").append(room.getMaLoaiPhong()).append("), ");
+    private void filterRooms() {
+        String roomType = spinnerRoomType.getSelectedItem().toString();
+        String status = spinnerStatus.getSelectedItem().toString();
+        Log.d(TAG, "Lọc phòng - Loại phòng: " + roomType + ", Trạng thái: " + status);
+        List<RoomModel> filteredList = new ArrayList<>(originalRoomList);
+
+        if (!roomType.equals("Tất cả")) {
+            int maLoaiPhong = roomType.equals("Standard") ? 1 : roomType.equals("VIP") ? 2 : 3;
+            filteredList.removeIf(room -> room.getMaLoaiPhong() != maLoaiPhong);
         }
-        return sb.toString();
+
+        if (!status.equals("Tất cả")) {
+            filteredList.removeIf(room -> !room.getStatus().equals(status));
+        }
+
+        roomList.clear();
+        roomList.addAll(filteredList);
+        Log.d(TAG, "Số lượng phòng sau khi lọc: " + roomList.size());
+        roomAdapter.notifyDataSetChanged();
+    }
+
+    private RoomModel parseRoom(DocumentSnapshot doc) {
+        Integer maPhong = doc.getLong("MaPhong") != null ? doc.getLong("MaPhong").intValue() : 0;
+        if (maPhong == 0) {
+            Log.d(TAG, "Bỏ qua phòng không hợp lệ hoặc thiếu MaPhong: " + doc.getId());
+            return null;
+        }
+        Integer maLoaiPhong = doc.getLong("MaLoaiPhong") != null ? doc.getLong("MaLoaiPhong").intValue() : 1;
+        String tenPhong = doc.getString("TenPhong") != null ? doc.getString("TenPhong") : ("Phòng " + maPhong);
+        Double giaPhong = doc.getDouble("GiaPhong") != null ? doc.getDouble("GiaPhong") : getDefaultPrice(maLoaiPhong);
+        Integer soLuongNguoiToiDa = doc.getLong("SoLuongNguoiToiDa") != null ? doc.getLong("SoLuongNguoiToiDa").intValue() : 2;
+        String trangThai = doc.getString("TrangThai") != null ? doc.getString("TrangThai") : "Trống";
+        String moTa = doc.getString("MoTa") != null ? doc.getString("MoTa") : "Không có mô tả";
+        List<Integer> tienIch = doc.get("TienIch") != null ? (List<Integer>) doc.get("TienIch") : new ArrayList<>();
+        return new RoomModel(maPhong, tenPhong, maLoaiPhong, giaPhong, soLuongNguoiToiDa, trangThai, moTa, tienIch);
+    }
+
+    private double getDefaultPrice(int maLoaiPhong) {
+        switch (maLoaiPhong) {
+            case 1: return 500000.0; // Standard
+            case 2: return 800000.0; // VIP
+            case 3: return 1200000.0; // Deluxe
+            default: return 500000.0;
+        }
+    }
+
+    private String formatTienIch(List<Integer> tienIch) {
+        if (tienIch == null || tienIch.isEmpty()) {
+            return "Không có";
+        }
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < tienIch.size(); i++) {
+            result.append(tienIch.get(i));
+            if (i < tienIch.size() - 1) {
+                result.append(",");
+            }
+        }
+        return result.toString();
+    }
+
+    private class RoomAdapter extends RecyclerView.Adapter<RoomAdapter.RoomViewHolder> {
+        private final List<RoomModel> rooms;
+
+        RoomAdapter(List<RoomModel> rooms) {
+            this.rooms = rooms;
+        }
+
+        @NonNull
+        @Override
+        public RoomViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_room, parent, false);
+            return new RoomViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RoomViewHolder holder, int position) {
+            RoomModel room = rooms.get(position);
+            holder.roomName.setText(room.getName());
+            holder.roomType.setText("Loại: " + roomTypeNames.getOrDefault(room.getMaLoaiPhong(), "Không xác định"));
+            holder.roomPrice.setText(NumberFormat.getCurrencyInstance(new Locale("vi", "VN")).format(room.getGiaPhong()) + "/đêm");
+            holder.txtRoomDetails.setText(String.format(Locale.getDefault(), "Tối đa %d người, %s, Tiện ích: %s",
+                    room.getSoLuongNguoiToiDa(), room.getMoTa(), formatTienIch(room.getTienIch())));
+
+            int statusColor;
+            switch (room.getStatus()) {
+                case "Trống":
+                    statusColor = 0xFF4CAF50;
+                    holder.roomStatus.setText("Trống");
+                    break;
+                case "Đã đặt":
+                    statusColor = 0xFFF44336;
+                    holder.roomStatus.setText("Đã đặt");
+                    break;
+                case "Đang sử dụng":
+                    statusColor = 0xFFFFEB3B;
+                    holder.roomStatus.setText("Đang sử dụng");
+                    break;
+                default:
+                    statusColor = 0xFFE0E0E0;
+                    holder.roomStatus.setText("Không xác định");
+            }
+            holder.statusCard.setCardBackgroundColor(statusColor);
+
+            holder.btnBookRoom.setOnClickListener(v -> {
+                Intent intent = new Intent(MainActivity.this, BookingActivity.class);
+                intent.putExtra("ROOM_ID", room.getMaPhong());
+                intent.putExtra("roomName", room.getName());
+                intent.putExtra("price", room.getGiaPhong());
+                intent.putExtra("selectedDate", selectedDate);
+                startActivity(intent);
+            });
+
+            holder.btnViewCalendar.setOnClickListener(v -> showAvailabilityDialog(room));
+        }
+
+        @Override
+        public int getItemCount() {
+            Log.d(TAG, "Số lượng phòng trong adapter: " + rooms.size());
+            return rooms.size();
+        }
+
+        class RoomViewHolder extends RecyclerView.ViewHolder {
+            TextView roomName, roomType, roomPrice, roomStatus, txtRoomDetails;
+            CardView statusCard;
+            Button btnBookRoom, btnViewCalendar;
+
+            RoomViewHolder(@NonNull View itemView) {
+                super(itemView);
+                roomName = itemView.findViewById(R.id.txtRoomName);
+                roomType = itemView.findViewById(R.id.txtRoomType);
+                roomPrice = itemView.findViewById(R.id.txtRoomPrice);
+                roomStatus = itemView.findViewById(R.id.txtRoomStatus);
+                statusCard = itemView.findViewById(R.id.statusCard);
+                txtRoomDetails = itemView.findViewById(R.id.txtRoomDetails);
+                btnBookRoom = itemView.findViewById(R.id.btnBookRoom);
+                btnViewCalendar = itemView.findViewById(R.id.btnViewCalendar);
+            }
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.sinhvien.appqlkhachsan;
+/*package com.sinhvien.appqlkhachsan;
 
 import com.bumptech.glide.annotation.GlideModule;
 import com.bumptech.glide.module.AppGlideModule;
@@ -7,3 +7,5 @@ import com.bumptech.glide.module.AppGlideModule;
 public class MyAppGlideModule extends AppGlideModule {
     // Để trống, chỉ cần định nghĩa để Glide nhận diện
 }
+
+ */

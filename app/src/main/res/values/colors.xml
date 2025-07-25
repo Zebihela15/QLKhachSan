@@ -15,4 +15,19 @@
     <!-- Màu phụ -->
     <color name="light_gray">#F5F5F5</color>
     <color name="border_gray">#E5E5E5</color>
+    <color name="status_pending">#FEF3C7</color>
+    <color name="status_pending_text">#92400E</color>
+    <color name="status_confirmed">#D1FAE5</color>
+    <color name="status_confirmed_text">#065F46</color>
+    <color name="status_active">#DBEAFE</color>
+    <color name="status_active_text">#1E40AF</color>
+    <color name="status_completed">#E9D5FF</color>
+    <color name="status_completed_text">#6B21A8</color>
+    <color name="primary_blue">#4F46E5</color>
+    <color name="background_light">#F8FAFC</color>
+    <color name="surface_light">#F1F5F9</color>
+    <color name="surface_variant">#E2E8F0</color>
+    <color name="text_primary">#1E293B</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="border_light">#E2E8F0</color>
 </resources>

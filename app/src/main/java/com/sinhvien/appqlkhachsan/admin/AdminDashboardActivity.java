@@ -48,6 +48,30 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         // Kiểm tra quyền admin
         checkAdminAccess();
+        Button btnStatistics = findViewById(R.id.btnStatistics);
+        btnStatistics.setOnClickListener(v -> {
+            if (isActive) {
+                Log.d(TAG, "Chuyển sang StatisticsActivity");
+                try {
+                    startActivity(new Intent(this, StatisticsActivity.class));
+                } catch (Exception e) {
+                    Log.e(TAG, "Lỗi khởi động StatisticsActivity: " + e.getMessage());
+                    Toast.makeText(this, "Không thể mở thống kê: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        Button btnManageRooms = findViewById(R.id.btnManageRooms);
+        btnManageRooms.setOnClickListener(v -> {
+            if (isActive) {
+                Log.d(TAG, "Chuyển sang RoomManageActivity");
+                try {
+                    startActivity(new Intent(this, RoomManagementActivity.class));
+                } catch (Exception e) {
+                    Log.e(TAG, "Lỗi khởi động RoomManagementActivity: " + e.getMessage());
+                    Toast.makeText(this, "Không thể mở trang quản lý phòng: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
 
         // Chuyển sang màn hình quản lý đơn đặt phòng
         btnManageBookings.setOnClickListener(v -> {
@@ -61,6 +85,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 }
             }
         });
+
 
         // Xử lý xóa dữ liệu
         btnClearData.setOnClickListener(v -> {
