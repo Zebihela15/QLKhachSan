@@ -35,5 +35,16 @@
         <item>Đã trả phòng</item>
         <item>Đã hủy</item>
     </string-array>
-
+    <string-array name="room_statuses">
+        <item>Tất cả</item>
+        <item>Trống</item>
+        <item>Đã đặt</item>
+        <item>Đang ở</item>
+        <item>Đang dọn</item>
+        <item>Bảo trì</item>
+    </string-array>
+    <string-array name="user_roles">
+        <item>Lễ tân</item>
+        <item>Admin</item>
+    </string-array>
 </resources>

@@ -70,7 +70,7 @@ public class BookingManagementActivity extends AppCompatActivity {
     private MaterialButton btnSort;
     private TextInputEditText editTextSearch;
     private ChipGroup chipGroupFilters;
-    private Chip chipAll, chipConfirmed, chipCheckedIn, chipCompleted, chipCancelled;
+    private Chip chipAll, chipPending, chipConfirmed, chipCheckedIn, chipCompleted, chipCancelled;
     private TextView tvResultsCount;
     private ExtendedFloatingActionButton fabAddBooking;
     private MaterialToolbar toolbar;
@@ -83,11 +83,12 @@ public class BookingManagementActivity extends AppCompatActivity {
             "dd/MM/yyyy",
             "yyyy-MM-dd"
     };
-    private final List<String> validStatuses = List.of("Đã xác nhận", "Đã nhận phòng", "Hoàn thành", "Đã hủy");
+    private final List<String> validStatuses = List.of("Chờ xác nhận", "Đã xác nhận", "Đã nhận phòng", "Hoàn thành", "Đã hủy");
     private String currentSortField = "TGDat";
     private Query.Direction currentSortDirection = Query.Direction.DESCENDING;
     private static final int REQUEST_WRITE_STORAGE = 100;
     private ListenerRegistration bookingsListener;
+    private boolean isLoading = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +106,7 @@ public class BookingManagementActivity extends AppCompatActivity {
         editTextSearch = findViewById(R.id.editTextSearch);
         chipGroupFilters = findViewById(R.id.chipGroupFilters);
         chipAll = findViewById(R.id.chipAll);
+        chipPending = findViewById(R.id.chipPending);
         chipConfirmed = findViewById(R.id.chipConfirmed);
         chipCheckedIn = findViewById(R.id.chipCheckedIn);
         chipCompleted = findViewById(R.id.chipCompleted);
@@ -127,6 +129,9 @@ public class BookingManagementActivity extends AppCompatActivity {
 
         // Set up real-time listener
         setupRealtimeListener();
+
+        // Check for auto check-in/check-out
+        checkAutoCheckInOut();
     }
 
     private String parseDate(String dateStr) {
@@ -151,7 +156,7 @@ public class BookingManagementActivity extends AppCompatActivity {
         if (dateStr == null || dateStr.isEmpty()) {
             Log.w(TAG, "Date string is null or empty");
             showSnackbar("Ngày không hợp lệ: " + dateStr);
-            return new Date(); // Trả về ngày hiện tại nếu parse thất bại
+            return new Date();
         }
         for (String format : possibleDateFormats) {
             try {
@@ -166,7 +171,7 @@ public class BookingManagementActivity extends AppCompatActivity {
         }
         Log.e(TAG, "All date formats failed for: " + dateStr);
         showSnackbar("Lỗi định dạng ngày: " + dateStr);
-        return new Date(); // Trả về ngày hiện tại nếu parse thất bại
+        return new Date();
     }
 
     private void setupEventListeners() {
@@ -193,6 +198,7 @@ public class BookingManagementActivity extends AppCompatActivity {
     private String getSelectedStatus() {
         int checkedId = chipGroupFilters.getCheckedChipId();
         if (checkedId == R.id.chipAll) return "Tất cả";
+        if (checkedId == R.id.chipPending) return "Chờ xác nhận";
         if (checkedId == R.id.chipConfirmed) return "Đã xác nhận";
         if (checkedId == R.id.chipCheckedIn) return "Đã nhận phòng";
         if (checkedId == R.id.chipCompleted) return "Hoàn thành";
@@ -232,7 +238,7 @@ public class BookingManagementActivity extends AppCompatActivity {
     private void setupRealtimeListener() {
         Query baseQuery = firestore.collection("bookings").orderBy(currentSortField, currentSortDirection);
         if (bookingsListener != null) {
-            bookingsListener.remove(); // Xóa listener cũ trước khi tạo mới
+            bookingsListener.remove();
         }
         bookingsListener = baseQuery.addSnapshotListener((querySnapshot, error) -> {
             if (error != null) {
@@ -247,7 +253,65 @@ public class BookingManagementActivity extends AppCompatActivity {
         });
     }
 
+    private void checkAutoCheckInOut() {
+        // Auto check-in
+        firestore.collection("bookings")
+                .whereEqualTo("TrangThaiDD", "Đã xác nhận")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        String checkIn = doc.getString("TGCheckin");
+                        Date checkInDate = parseDateToDate(checkIn);
+                        Date currentDate = new Date();
+                        if (checkInDate != null && !currentDate.before(checkInDate)) {
+                            String invoiceId = doc.getString("MaDon");
+                            int roomId = doc.getLong("MaPhong").intValue();
+                            showAutoCheckInDialog(doc.getId(), invoiceId, roomId);
+                            Log.d(TAG, "Auto check-in triggered for booking: " + doc.getId());
+                        }
+                    }
+                });
+
+        // Auto check-out
+        firestore.collection("bookings")
+                .whereEqualTo("TrangThaiDD", "Đã nhận phòng")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        String checkOut = doc.getString("TGCheckout");
+                        Date checkOutDate = parseDateToDate(checkOut);
+                        Date currentDate = new Date();
+                        if (checkOutDate != null && !currentDate.before(checkOutDate)) {
+                            String invoiceId = doc.getString("MaDon");
+                            int roomId = doc.getLong("MaPhong").intValue();
+                            showAutoCheckOutDialog(doc.getId(), invoiceId, roomId);
+                            Log.d(TAG, "Auto check-out triggered for booking: " + doc.getId());
+                        }
+                    }
+                });
+    }
+
+    private void showAutoCheckInDialog(String maDon, String invoiceId, int roomId) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Xác nhận Check-in Tự động");
+        builder.setMessage("Đơn đặt phòng " + maDon + " đã đến ngày check-in. Xác nhận check-in?");
+        builder.setPositiveButton("Xác nhận", (dialog, which) -> updateBookingStatus(invoiceId, roomId, "Đã nhận phòng"));
+        builder.setNegativeButton("Hủy", null);
+        builder.show();
+    }
+
+    private void showAutoCheckOutDialog(String maDon, String invoiceId, int roomId) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Xác nhận Check-out Tự động");
+        builder.setMessage("Đơn đặt phòng " + maDon + " đã đến ngày check-out. Xác nhận check-out?");
+        builder.setPositiveButton("Xác nhận", (dialog, which) -> updateBookingStatus(invoiceId, roomId, "Hoàn thành"));
+        builder.setNegativeButton("Hủy", null);
+        builder.show();
+    }
+
     private void loadBookings(String query, String status, String sortField, Query.Direction sortDirection) {
+        if (isLoading) return;
+        isLoading = true;
         Log.d(TAG, "Loading bookings - query: " + query + ", status: " + status +
                 ", sortField: " + sortField + ", sortDirection: " + sortDirection);
         Query firestoreQuery = firestore.collection("bookings").orderBy(sortField, sortDirection);
@@ -255,6 +319,7 @@ public class BookingManagementActivity extends AppCompatActivity {
         if (status != null && !status.equals("Tất cả")) {
             if (!validStatuses.contains(status)) {
                 showToast("Trạng thái không hợp lệ!");
+                isLoading = false;
                 return;
             }
             firestoreQuery = firestoreQuery.whereEqualTo("TrangThaiDD", status);
@@ -288,7 +353,8 @@ public class BookingManagementActivity extends AppCompatActivity {
 
                 if (!validStatuses.contains(statusDD)) {
                     Log.e(TAG, "Invalid status for booking " + maDon + ": " + statusDD);
-                    showSnackbar("Trạng thái không hợp lệ: " + statusDD);
+                    firestore.collection("bookings").document(maDon).update("TrangThaiDD", "Đã hủy")
+                            .addOnSuccessListener(aVoid -> Log.d(TAG, "Fixed invalid status for booking: " + maDon));
                     continue;
                 }
 
@@ -297,7 +363,6 @@ public class BookingManagementActivity extends AppCompatActivity {
                 Date bookingDate = parseDateToDate(bookingDateStr);
                 Date currentDate = new Date();
 
-                // Kiểm tra ngày đặt, check-in, check-out
                 if (bookingDate == null || checkInDate == null || checkOutDate == null) {
                     Log.e(TAG, "Invalid dates for booking " + maDon + ": bookingDate=" + bookingDateStr + ", checkIn=" + checkIn + ", checkOut=" + checkOut);
                     showSnackbar("Ngày không hợp lệ cho đơn " + maDon);
@@ -327,7 +392,6 @@ public class BookingManagementActivity extends AppCompatActivity {
                                         Long maxGuests = roomDoc.getLong("SoLuongNguoiToiDa");
                                         if (maxGuests != null && guestCount > maxGuests) {
                                             Log.e(TAG, "Guest count exceeds room capacity for MaPhong: " + roomId);
-                                            showSnackbar("Số khách vượt quá sức chứa phòng: " + roomId);
                                             return;
                                         }
 
@@ -393,10 +457,12 @@ public class BookingManagementActivity extends AppCompatActivity {
             if (querySnapshot.isEmpty()) {
                 updateUIWithNoBookings("Không có đơn đặt phòng nào!");
             }
+            isLoading = false;
         }).addOnFailureListener(e -> {
             Log.e(TAG, "Error loading bookings: " + e.getMessage());
             showSnackbar("Lỗi tải danh sách đơn đặt phòng!");
             updateUIWithNoBookings("Lỗi tải danh sách đơn đặt phòng!");
+            isLoading = false;
         });
     }
 
@@ -437,6 +503,13 @@ public class BookingManagementActivity extends AppCompatActivity {
                         reasonCancel = invoiceDoc.getString("LyDoHuy");
                     }
 
+                    String finalStatus = invoiceSnapshot.isEmpty() ? statusDD : invoiceStatus;
+                    if (!validStatuses.contains(finalStatus)) {
+                        Log.e(TAG, "Invalid status for booking " + maDon + ": " + finalStatus);
+                        showSnackbar("Trạng thái không hợp lệ: " + finalStatus);
+                        return;
+                    }
+
                     String roomName = roomDoc.getString("TenPhong") != null ? roomDoc.getString("TenPhong") : "Phòng " + roomId;
                     String roomType = roomDoc.getString("LoaiPhong") != null ? roomDoc.getString("LoaiPhong") : "N/A";
 
@@ -446,7 +519,7 @@ public class BookingManagementActivity extends AppCompatActivity {
                             invoiceId.toLowerCase(Locale.getDefault()).contains(query) ||
                             (phone != null && phone.contains(query))) {
                         Booking booking = new Booking(invoiceId, maDon, customerName, phone, roomId, roomName,
-                                formattedCheckIn, formattedCheckOut, totalPrice, invoiceStatus, specialRequest,
+                                formattedCheckIn, formattedCheckOut, totalPrice, finalStatus, specialRequest,
                                 guestCount, voucherCode, roomType, reasonCancel, cmnd, email);
                         uniqueBookings.put(maDon, booking);
                         updateBookingList(uniqueBookings);
@@ -479,6 +552,9 @@ public class BookingManagementActivity extends AppCompatActivity {
             bookingList.clear();
             bookingList.addAll(uniqueBookings.values());
             Log.d(TAG, "Updating UI with " + bookingList.size() + " bookings");
+            for (Booking booking : bookingList) {
+                Log.d(TAG, "Displaying booking: " + booking.bookingId + ", status: " + booking.status);
+            }
             tvResultsCount.setText("Hiển thị " + bookingList.size() + " đơn đặt phòng");
             if (bookingList.isEmpty()) {
                 recyclerViewBookings.setVisibility(View.GONE);
@@ -575,11 +651,10 @@ public class BookingManagementActivity extends AppCompatActivity {
                                     String checkIn = bookingDoc.getString("TGCheckin");
                                     Date checkInDate = parseDateToDate(checkIn);
                                     Date currentDate = new Date();
-                                    // Tạo ngày check-in sớm 3 ngày
                                     Calendar calendar = Calendar.getInstance();
                                     if (checkInDate != null) {
                                         calendar.setTime(checkInDate);
-                                        calendar.add(Calendar.DAY_OF_MONTH, -3); // Cho phép check-in sớm 3 ngày
+                                        calendar.add(Calendar.DAY_OF_MONTH, -3);
                                     }
                                     Date earlyCheckInDate = checkInDate != null ? calendar.getTime() : null;
                                     Log.d(TAG, "Comparing dates: currentDate=" + displayFormat.format(currentDate) +
@@ -636,7 +711,6 @@ public class BookingManagementActivity extends AppCompatActivity {
                                         showSnackbar("Ngày trả phòng không hợp lệ: " + checkOut);
                                         return;
                                     }
-                                    // Kiểm tra ngày check-out thực tế
                                     if (currentDate.before(checkOutDate)) {
                                         Log.d(TAG, "Check-out date is in the future: " + checkOut);
                                         showCheckOutConfirmationDialog(invoiceId, roomId, maDon, bookingDoc, doc, checkOutDate, currentDate);
@@ -690,7 +764,6 @@ public class BookingManagementActivity extends AppCompatActivity {
                     }
 
                     Date finalCheckInDate = checkInDate;
-                    Date finalCheckInDate1 = checkInDate;
                     firestore.collection("rooms").document(String.valueOf(roomId)).get()
                             .addOnSuccessListener(roomDoc -> {
                                 if (!roomDoc.exists()) {
@@ -706,7 +779,7 @@ public class BookingManagementActivity extends AppCompatActivity {
                                 message.append("Tên khách: ").append(customerName).append("\n")
                                         .append("Số CMND/CCCD: ").append(cmnd).append("\n")
                                         .append("Phòng: ").append(roomName).append("\n")
-                                        .append("Ngày nhận phòng: ").append(finalCheckInDate1 != null ? displayFormat.format(finalCheckInDate1) : "N/A").append("\n")
+                                        .append("Ngày nhận phòng: ").append(finalCheckInDate != null ? displayFormat.format(finalCheckInDate) : "N/A").append("\n")
                                         .append("Ngày trả phòng dự kiến: ").append(displayFormat.format(checkOutDate)).append("\n")
                                         .append("Ngày trả phòng thực tế: ").append(displayFormat.format(currentDate)).append("\n\n")
                                         .append("Vui lòng xác nhận:\n")
@@ -916,7 +989,7 @@ public class BookingManagementActivity extends AppCompatActivity {
                                 .addOnSuccessListener(aVoid1 -> {
                                     Log.d(TAG, "Deleted booking and invoice: " + maDon);
                                     showSnackbar("Xóa đơn thành công!");
-                                    setupRealtimeListener(); // Làm mới listener
+                                    setupRealtimeListener();
                                     loadBookings(editTextSearch.getText().toString(), getSelectedStatus(), currentSortField, currentSortDirection);
                                 })
                                 .addOnFailureListener(e -> {
@@ -1178,6 +1251,10 @@ public class BookingManagementActivity extends AppCompatActivity {
                 int statusColor;
                 int chipBackgroundColor;
                 switch (booking.status != null ? booking.status : "") {
+                    case "Chờ xác nhận":
+                        statusColor = activity.getResources().getColor(android.R.color.holo_orange_dark);
+                        chipBackgroundColor = activity.getResources().getColor(android.R.color.holo_orange_light);
+                        break;
                     case "Đã xác nhận":
                         statusColor = activity.getResources().getColor(android.R.color.holo_green_dark);
                         chipBackgroundColor = activity.getResources().getColor(android.R.color.holo_green_light);
@@ -1203,6 +1280,12 @@ public class BookingManagementActivity extends AppCompatActivity {
                     holder.btnSecondaryAction.setVisibility(View.GONE);
                     holder.btnDelete.setVisibility(View.GONE);
                     activity.showSnackbar("Trạng thái đơn đặt phòng không xác định!");
+                } else if (booking.status.equals("Chờ xác nhận")) {
+                    holder.btnPrimaryAction.setText("Xác nhận");
+                    holder.btnPrimaryAction.setVisibility(View.VISIBLE);
+                    holder.btnSecondaryAction.setText("Hủy");
+                    holder.btnSecondaryAction.setVisibility(View.VISIBLE);
+                    holder.btnDelete.setVisibility(View.GONE);
                 } else if (booking.status.equals("Đã xác nhận")) {
                     holder.btnPrimaryAction.setText("Check-in");
                     holder.btnPrimaryAction.setVisibility(View.VISIBLE);
@@ -1226,7 +1309,8 @@ public class BookingManagementActivity extends AppCompatActivity {
                 holder.btnViewDetails.setVisibility(View.VISIBLE);
 
                 holder.btnPrimaryAction.setOnClickListener(v -> {
-                    String newStatus = booking.status.equals("Đã xác nhận") ? "Đã nhận phòng" : "Hoàn thành";
+                    String newStatus = booking.status.equals("Chờ xác nhận") ? "Đã xác nhận" :
+                            booking.status.equals("Đã xác nhận") ? "Đã nhận phòng" : "Hoàn thành";
                     Log.d(TAG, "Primary action clicked for booking " + booking.invoiceId + ": newStatus=" + newStatus);
                     activity.updateBookingStatus(booking.invoiceId, booking.roomId, newStatus);
                 });

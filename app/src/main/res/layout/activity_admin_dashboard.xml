@@ -1,133 +1,227 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:background="?android:colorBackground"
+    tools:context=".admin.AdminDashboardActivity">
 
-    <!-- Card Views -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
-        <androidx.cardview.widget.CardView
-            android:layout_width="0dp"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_margin="4dp">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-                <TextView
-                    android:id="@+id/tvTotalRooms"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Tổng phòng: 0"
-                    android:textSize="16sp"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-        <androidx.cardview.widget.CardView
-            android:layout_width="0dp"
+            android:text="Bảng điều khiển Admin"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
+            android:layout_marginBottom="24dp" />
+
+        <GridLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_margin="4dp">
-            <LinearLayout
-                android:layout_width="match_parent"
+            android:columnCount="2"
+            android:rowCount="3"
+            android:useDefaultMargins="true">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-                <TextView
-                    android:id="@+id/tvTotalCustomers"
-                    android:layout_width="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="8dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Tổng khách: 0"
-                    android:textSize="16sp"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tổng phòng"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"/>
+                    <TextView
+                        android:id="@+id/tvTotalRooms"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="8dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tổng khách"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"/>
+                    <TextView
+                        android:id="@+id/tvTotalCustomers"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="8dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Đặt hôm nay"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"/>
+                    <TextView
+                        android:id="@+id/tvTodayBookings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="8dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Đơn chờ xử lý"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"/>
+                    <TextView
+                        android:id="@+id/tvPendingBookings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnSpan="2"
+                android:layout_columnWeight="1"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="8dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tổng doanh thu"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"/>
+                    <TextView
+                        android:id="@+id/tvRevenue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 VNĐ"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </GridLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chức năng"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="16dp"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnManageBookings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardElevation="2dp"
+            app:cardCornerRadius="8dp"
+            android:layout_marginBottom="8dp">
+            <include layout="@layout/item_admin_action"
+                android:id="@+id/action_manage_bookings"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnManageRooms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardElevation="2dp"
+            app:cardCornerRadius="8dp"
+            android:layout_marginBottom="8dp">
+            <include layout="@layout/item_admin_action"
+                android:id="@+id/action_manage_rooms"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnStatistics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardElevation="2dp"
+            app:cardCornerRadius="8dp"
+            android:layout_marginBottom="8dp">
+            <include layout="@layout/item_admin_action"
+                android:id="@+id/action_statistics"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnManageAccounts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardElevation="2dp"
+            app:cardCornerRadius="8dp">
+            <include layout="@layout/item_admin_action"
+                android:id="@+id/action_manage_accounts"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearData"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Xoá Toàn Bộ Dữ Liệu Giao Dịch"
+            android:textColor="@color/design_default_color_error"
+            app:strokeColor="@color/design_default_color_error"
+            android:layout_marginTop="32dp"/>
+
     </LinearLayout>
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp">
-            <TextView
-                android:id="@+id/tvTodayBookings"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Đặt hôm nay: 0"
-                android:textSize="16sp"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp">
-            <TextView
-                android:id="@+id/tvRevenue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Doanh thu: 0 VNĐ"
-                android:textSize="16sp"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp">
-            <TextView
-                android:id="@+id/tvPendingBookings"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Đơn chờ xử lý: 0"
-                android:textSize="16sp"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <Button
-        android:id="@+id/btnManageBookings"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Quản lý đơn đặt phòng"
-        android:layout_marginTop="16dp"/>
-    <Button
-        android:id="@+id/btnManageRooms"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Quản lý phòng"
-        android:layout_marginTop="8dp"/>
-    <Button
-        android:id="@+id/btnStatistics"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Xem thống kê"
-        android:layout_marginTop="8dp"/>
-    <Button
-        android:id="@+id/btnClearData"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Xóa dữ liệu bookings và invoices"
-        android:layout_marginTop="8dp"/>
-
-
-
-</LinearLayout>
+</ScrollView>

@@ -8,10 +8,25 @@
     <color name="yellow">#FFFF00</color>
     <color name="gray">#777777</color>
 
+
+    <color name="holo_blue_light">#ff33b5e5</color>
+    <color name="holo_green_light">#ff99cc00</color>
+    <color name="holo_red_light">#ffff4444</color>
+    <color name="holo_orange_light">#ffffbb33</color>
+
+    <color name="holo_blue_dark">#ff0099cc</color>
+    <color name="holo_green_dark">#ff669900</color>
+    <color name="holo_red_dark">#ffcc0000</color>
+    <color name="holo_orange_dark">#ffff8800</color>
+
+    <color name="darker_gray">#ffaaaaaa</color>
     <!-- Màu gradient cho header -->
     <color name="gradient_start">#4F46E5</color>
     <color name="gradient_end">#7C3AED</color>
-
+    <color name="status_vacant">#90EE90</color>
+    <color name="status_booked">#FFD700</color>
+    <color name="status_checked_in">#FFA07A</color>
+    <color name="status_maintenance">#C0C0C0</color>
     <!-- Màu phụ -->
     <color name="light_gray">#F5F5F5</color>
     <color name="border_gray">#E5E5E5</color>

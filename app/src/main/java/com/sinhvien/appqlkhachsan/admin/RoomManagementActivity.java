@@ -338,6 +338,10 @@ public class RoomManagementActivity extends AppCompatActivity {
                 maPhong = Integer.parseInt(maPhongStr);
                 giaPhong = Double.parseDouble(giaPhongStr);
                 soLuongNguoiToiDa = Integer.parseInt(soLuongNguoiToiDaStr);
+                if (giaPhong <= 0) {
+                    Snackbar.make(dialogView, "Giá phòng phải lớn hơn 0!", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
             } catch (NumberFormatException e) {
                 Log.e(TAG, "Dữ liệu số không hợp lệ: " + e.getMessage());
                 Snackbar.make(dialogView, "Dữ liệu số không hợp lệ!", Snackbar.LENGTH_LONG).show();

@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageView;
@@ -20,12 +19,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -53,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
     private RoomAdapter roomAdapter;
     private EditText datePicker;
     private Spinner spinnerRoomType, spinnerStatus;
-    private FloatingActionButton fabAddBooking;
     private ImageView notificationIcon;
     private List<RoomModel> roomList;
     private List<RoomModel> originalRoomList;
@@ -88,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
         datePicker = findViewById(R.id.datePicker);
         spinnerRoomType = findViewById(R.id.spinnerRoomType);
         spinnerStatus = findViewById(R.id.spinnerStatus);
-        fabAddBooking = findViewById(R.id.fabAddBooking);
         notificationIcon = findViewById(R.id.notificationIcon);
 
         roomRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
@@ -135,11 +131,6 @@ public class MainActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        fabAddBooking.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, BookingActivity.class);
-            startActivity(intent);
-        });
-
         notificationIcon.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, NotificationsActivity.class);
             startActivity(intent);
@@ -151,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.nav_home) {
                 return true;
             } else if (itemId == R.id.nav_statistics) {
-                startActivity(new Intent(MainActivity.this, StatisticsActivity.class));
+                startActivity(new Intent(MainActivity.this, ReceptionistRoomDashboardActivity.class));
                 return true;
             } else if (itemId == R.id.nav_management) {
                 startActivity(new Intent(MainActivity.this, BookingManagementActivity.class));
@@ -195,9 +186,9 @@ public class MainActivity extends AppCompatActivity {
         builder.setView(dialogView);
 
         TextView roomName = dialogView.findViewById(R.id.dialogRoomName);
-        Button btnPrevMonth = dialogView.findViewById(R.id.btnPrevMonth);
-        Button btnNextMonth = dialogView.findViewById(R.id.btnNextMonth);
-        Button btnClose = dialogView.findViewById(R.id.btnClose);
+        MaterialButton btnPrevMonth = dialogView.findViewById(R.id.btnPrevMonth);
+        MaterialButton btnNextMonth = dialogView.findViewById(R.id.btnNextMonth);
+        MaterialButton btnClose = dialogView.findViewById(R.id.btnClose);
         AlertDialog dialog = builder.create();
 
         Calendar calendar = Calendar.getInstance();
@@ -419,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
                             Log.d(TAG, "Thêm phòng: MaPhong=" + room.getMaPhong() + ", TenPhong=" + room.getName());
                             roomMap.put(room.getMaPhong(), room);
                         } else {
-                            Log.w(TAG, "Phòng không hợp lệ, bỏ qua: " + roomDoc.getId());
+
                         }
                     }
 
@@ -590,26 +581,6 @@ public class MainActivity extends AppCompatActivity {
             holder.txtRoomDetails.setText(String.format(Locale.getDefault(), "Tối đa %d người, %s, Tiện ích: %s",
                     room.getSoLuongNguoiToiDa(), room.getMoTa(), formatTienIch(room.getTienIch())));
 
-            int statusColor;
-            switch (room.getStatus()) {
-                case "Trống":
-                    statusColor = 0xFF4CAF50;
-                    holder.roomStatus.setText("Trống");
-                    break;
-                case "Đã đặt":
-                    statusColor = 0xFFF44336;
-                    holder.roomStatus.setText("Đã đặt");
-                    break;
-                case "Đang sử dụng":
-                    statusColor = 0xFFFFEB3B;
-                    holder.roomStatus.setText("Đang sử dụng");
-                    break;
-                default:
-                    statusColor = 0xFFE0E0E0;
-                    holder.roomStatus.setText("Không xác định");
-            }
-            holder.statusCard.setCardBackgroundColor(statusColor);
-
             holder.btnBookRoom.setOnClickListener(v -> {
                 Intent intent = new Intent(MainActivity.this, BookingActivity.class);
                 intent.putExtra("ROOM_ID", room.getMaPhong());
@@ -629,17 +600,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         class RoomViewHolder extends RecyclerView.ViewHolder {
-            TextView roomName, roomType, roomPrice, roomStatus, txtRoomDetails;
-            CardView statusCard;
-            Button btnBookRoom, btnViewCalendar;
+            TextView roomName, roomType, roomPrice, txtRoomDetails;
+            MaterialButton btnBookRoom, btnViewCalendar;
 
             RoomViewHolder(@NonNull View itemView) {
                 super(itemView);
                 roomName = itemView.findViewById(R.id.txtRoomName);
                 roomType = itemView.findViewById(R.id.txtRoomType);
                 roomPrice = itemView.findViewById(R.id.txtRoomPrice);
-                roomStatus = itemView.findViewById(R.id.txtRoomStatus);
-                statusCard = itemView.findViewById(R.id.statusCard);
                 txtRoomDetails = itemView.findViewById(R.id.txtRoomDetails);
                 btnBookRoom = itemView.findViewById(R.id.btnBookRoom);
                 btnViewCalendar = itemView.findViewById(R.id.btnViewCalendar);

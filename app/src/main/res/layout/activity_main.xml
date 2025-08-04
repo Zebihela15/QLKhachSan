@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="@drawable/luxury_gradient_bg">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp"
@@ -19,21 +19,25 @@
             android:id="@+id/headerBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingVertical="20dp"
+            android:paddingVertical="28dp"
             android:paddingHorizontal="24dp"
-            android:background="@drawable/header_gradient_bg"
+            android:background="@drawable/golden_header_gradient"
             app:layout_constraintTop_toTopOf="parent"
-            android:elevation="6dp">
+            android:elevation="12dp">
 
             <TextView
                 android:id="@+id/appTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🏨 Quản lý Khách sạn"
-                android:textSize="24sp"
+                android:text="Quản lý Khách sạn"
+                android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="serif"
+                android:shadowColor="#B8860B"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="2"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -43,30 +47,30 @@
                 android:layout_height="wrap_content"
                 android:text="Hỗ trợ đặt phòng nhanh cho khách hàng"
                 android:textSize="16sp"
-                android:textColor="#E8F4FD"
-                android:alpha="0.9"
+                android:textColor="#FFF8DC"
+                android:alpha="0.95"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/appTitle"
                 android:layout_marginTop="4dp" />
 
             <androidx.cardview.widget.CardView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#FFFFFF"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="6dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/appTitle"
                 app:layout_constraintBottom_toBottomOf="@id/welcomeText">
 
                 <ImageView
                     android:id="@+id/notificationIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_notifications"
                     android:contentDescription="Thông báo đặt phòng"
-                    app:tint="#2196F3" />
+                    android:background="@drawable/golden_card_bg"
+                    app:tint="#B8860B" />
             </androidx.cardview.widget.CardView>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -75,11 +79,10 @@
             android:id="@+id/datePickerCard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="12dp"
             android:layout_marginHorizontal="24dp"
-            android:layout_marginTop="-20dp"
+            android:layout_marginTop="-16dp"
             app:layout_constraintTop_toBottomOf="@id/headerBar"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -89,15 +92,17 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="12dp">
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="16dp"
+                android:background="@drawable/golden_border">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ngày kiểm tra:"
+                    android:text="📅 Ngày kiểm tra:"
                     android:textSize="16sp"
-                    android:textColor="#546E7A" />
+                    android:textColor="#8B4513"
+                    android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/datePicker"
@@ -106,9 +111,12 @@
                     android:layout_weight="1"
                     android:hint="Chọn ngày (YYYY-MM-DD)"
                     android:textSize="16sp"
+                    android:textColor="#2F1B14"
+                    android:textColorHint="#A0522D"
                     android:inputType="date"
                     android:focusable="false"
                     android:background="@android:color/transparent"
+                    android:layout_marginStart="12dp"
                     android:contentDescription="Chọn ngày kiểm tra phòng trống" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -119,8 +127,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:cardCornerRadius="20dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="#FFFFFF"
+            app:cardElevation="8dp"
             android:layout_marginHorizontal="24dp"
             android:layout_marginTop="20dp"
             app:layout_constraintTop_toBottomOf="@id/datePickerCard"
@@ -131,8 +138,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp">
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="12dp"
+                android:background="@drawable/golden_border">
 
                 <Spinner
                     android:id="@+id/spinnerRoomType"
@@ -142,13 +150,19 @@
                     android:background="@android:color/transparent"
                     android:contentDescription="Lọc theo loại phòng" />
 
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="#DAA520"
+                    android:layout_marginHorizontal="16dp"
+                    android:alpha="0.3" />
+
                 <Spinner
                     android:id="@+id/spinnerStatus"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
                     android:background="@android:color/transparent"
-                    android:layout_marginStart="12dp"
                     android:contentDescription="Lọc theo trạng thái phòng" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -159,13 +173,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Danh sách Phòng"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:textColor="#1A237E"
-            android:fontFamily="sans-serif-medium"
+            android:textColor="#8B4513"
+            android:fontFamily="serif"
+            android:shadowColor="#DAA520"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2"
             app:layout_constraintTop_toBottomOf="@id/filterCard"
             app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="28dp"
             android:layout_marginStart="24dp" />
 
         <!-- Room RecyclerView -->
@@ -184,18 +202,7 @@
             android:layout_marginTop="16dp" />
 
         <!-- Floating Action Button for New Booking -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabAddBooking"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_add"
-            app:fabSize="normal"
-            app:backgroundTint="#2196F3"
-            app:tint="#FFFFFF"
-            android:contentDescription="Thêm đặt phòng mới"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_margin="16dp" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Bottom Navigation -->
@@ -203,8 +210,8 @@
         android:id="@+id/navigation"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#FFFFFF"
-        android:elevation="12dp"
+        android:background="@drawable/golden_nav_bg"
+        android:elevation="16dp"
         android:contentDescription="Điều hướng chính"
         app:itemIconTint="@drawable/bottom_nav_selector"
         app:itemTextColor="@drawable/bottom_nav_selector"
