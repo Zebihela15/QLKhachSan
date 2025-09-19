@@ -312,6 +312,13 @@
                     app:cornerRadius="8dp"
                     android:layout_marginEnd="8dp"
                     android:visibility="gone" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMarkAsCleaned"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dọn xong"
+                    android:visibility="gone" />
             </LinearLayout>
 
         </LinearLayout>

@@ -29,11 +29,11 @@
                 android:id="@+id/appTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Quản lý Khách sạn"
+                android:text="Quản Lý Khách Sạn"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
-                android:fontFamily="serif"
+
                 android:shadowColor="#B8860B"
                 android:shadowDx="1"
                 android:shadowDy="1"
@@ -176,7 +176,7 @@
             android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="#8B4513"
-            android:fontFamily="serif"
+
             android:shadowColor="#DAA520"
             android:shadowDx="1"
             android:shadowDy="1"

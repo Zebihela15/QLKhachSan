@@ -32,7 +32,7 @@
             android:textStyle="bold"
             android:textSize="20sp"
             android:textColor="#8B4513"
-            android:fontFamily="serif"
+
             android:singleLine="true"
             android:ellipsize="end"
             android:shadowColor="#DAA520"
@@ -60,7 +60,7 @@
             android:textSize="18sp"
             android:textColor="#B8860B"
             android:textStyle="bold"
-            android:fontFamily="serif"
+
             android:layout_marginTop="8dp"
             android:shadowColor="#DAA520"
             android:shadowDx="1"
@@ -90,41 +90,63 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnViewCalendar"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="1"
-                android:text="📅 Lịch"
-                android:textSize="14sp"
-                android:textColor="#8B4513"
-                android:textStyle="bold"
-                android:background="@drawable/golden_button_light"
-                app:backgroundTint="@null"
-                app:cornerRadius="16dp"
-                android:layout_marginEnd="8dp"
-                android:paddingHorizontal="12dp"
-                app:rippleColor="#80DAA520"
-                android:contentDescription="Xem lịch trống" />
+            android:orientation="vertical">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnBookRoom"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="1"
-                android:text="Đặt"
-                android:textSize="14sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:text="Đặt Phòng"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
-                android:background="@drawable/golden_button_dark"
                 app:backgroundTint="@null"
+                android:background="@drawable/golden_button_dark"
                 app:cornerRadius="16dp"
-                android:layout_marginStart="8dp"
-                android:paddingHorizontal="12dp"
-                app:rippleColor="#80DAA520"
+                app:icon="@drawable/ic_book_24"
+                app:iconTint="#FFFFFF"
+                app:iconPadding="12dp"
+                android:paddingVertical="12dp"
                 android:contentDescription="Đặt phòng" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCheckInNow"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:layout_marginTop="8dp"
+                android:text="Check-in Ngay"
+                android:textColor="#8B4513"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_check_in_24"
+                app:iconTint="#8B4513"
+                app:strokeColor="#DAA520"
+                app:rippleColor="#33DAA520"
+                app:iconPadding="12dp"
+                android:paddingVertical="8dp"
+                android:contentDescription="Check-in ngay" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewCalendar"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:layout_marginTop="8dp"
+                android:text="Xem Lịch Trống"
+                android:textColor="#8B4513"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_calendar_24"
+                app:iconTint="#8B4513"
+                app:strokeColor="#DAA520"
+                app:rippleColor="#33DAA520"
+                app:iconPadding="12dp"
+                android:paddingVertical="8dp"
+                android:contentDescription="Xem lịch trống" />
+
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

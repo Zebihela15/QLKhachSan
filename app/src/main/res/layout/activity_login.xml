@@ -62,7 +62,7 @@
         android:id="@+id/tvRegister"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Bạn là người mới? Đăng ký!"
+
         android:textColor="#FFFFFF"
         android:textSize="16sp"
         android:layout_gravity="center"
